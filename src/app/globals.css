@@ -1,0 +1,343 @@
+:root {
+  --ui-canvas: #f4f4f5;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #fafafa;
+  --ui-surface-3: #f3f3f5;
+  --ui-border: #ececef;
+  --ui-border-strong: #e2e2e6;
+  --ui-text: #1b1b1f;
+  --ui-text-2: #67676f;
+  --ui-text-3: #9b9ba3;
+  --accent: oklch(0.62 0.18 264);
+  --accent-press: oklch(0.55 0.18 264);
+  --accent-soft: oklch(0.62 0.18 264 / 0.12);
+  --accent-on: #ffffff;
+  --avatar-bg: #ececef;
+  --avatar-text: #54545c;
+  --good: oklch(0.66 0.13 162);
+  --warn: oklch(0.72 0.14 70);
+  --idle: #b9b9c0;
+}
+
+[data-mantine-color-scheme="dark"] {
+  --ui-canvas: #0b0b0c;
+  --ui-surface: #141416;
+  --ui-surface-2: #19191c;
+  --ui-surface-3: #202024;
+  --ui-border: #262629;
+  --ui-border-strong: #313136;
+  --ui-text: #ededf0;
+  --ui-text-2: #9a9aa3;
+  --ui-text-3: #6a6a72;
+  --accent: oklch(0.68 0.17 264);
+  --accent-press: oklch(0.74 0.16 264);
+  --accent-soft: oklch(0.68 0.17 264 / 0.18);
+  --accent-on: #0b0b0c;
+  --avatar-bg: #27272b;
+  --avatar-text: #c2c2cb;
+  --good: oklch(0.7 0.12 162);
+  --warn: oklch(0.76 0.13 70);
+  --idle: #48484f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100vw;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  min-height: 100%;
+  background: var(--ui-canvas);
+  color: var(--ui-text);
+  font-family: var(--font-hanken), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.25s ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---- app shell ---- */
+.app {
+  background: var(--ui-surface);
+  overflow: hidden;
+}
+
+.seg {
+  display: flex;
+  background: var(--ui-surface-3);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.seg button {
+  font: 500 12px var(--font-hanken), sans-serif;
+  color: var(--ui-text-2);
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.seg button.on {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+[data-mantine-color-scheme="dark"] .seg button.on {
+  background: var(--ui-border-strong);
+}
+
+.iconbtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--ui-text-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.iconbtn:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text);
+}
+
+/* ---- frappe overrides ---- */
+.gantt-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
+ * frappe-gantt attaches its own scroll listener (for the sticky current-month
+ * label, infinite padding, etc.) to .gantt-container, so that element - not
+ * .gantt-wrap - must be the one that actually scrolls, or that logic never
+ * fires and the sticky label freezes on whatever month was first rendered.
+ */
+.gantt-wrap .gantt-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 0;
+}
+
+.gantt-wrap .gantt-container::-webkit-scrollbar {
+  height: 7px;
+  width: 7px;
+}
+
+.gantt-wrap .gantt-container::-webkit-scrollbar-thumb {
+  background: var(--ui-border-strong);
+  border-radius: 99px;
+}
+
+.gantt-wrap .gantt-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gantt-wrap .grid-header {
+  border-bottom: 1px solid var(--ui-border) !important;
+}
+
+.g-parent .bar {
+  fill: var(--accent) !important;
+  stroke: none !important;
+  outline: none !important;
+}
+
+.g-parent .bar-progress {
+  fill: color-mix(in srgb, var(--accent) 70%, #000 22%) !important;
+}
+
+.g-parent .bar-label {
+  fill: var(--accent-on) !important;
+  font-family: var(--font-hanken) !important;
+  font-weight: 600 !important;
+}
+
+.g-child .bar {
+  fill: var(--ui-surface-3) !important;
+  outline: 1px solid var(--ui-border-strong) !important;
+}
+
+.g-child .bar-progress {
+  fill: var(--accent) !important;
+  opacity: 0.85;
+}
+
+.g-child .bar-label {
+  fill: var(--ui-text) !important;
+  font-family: var(--font-hanken) !important;
+  font-weight: 500 !important;
+}
+
+[data-mantine-color-scheme="dark"] .g-child .bar {
+  fill: #232327 !important;
+}
+
+/* completed projects/tasks - distinct from the in-progress accent colour */
+.g-parent-complete .bar {
+  fill: var(--good) !important;
+  stroke: none !important;
+  outline: none !important;
+}
+
+.g-parent-complete .bar-progress {
+  fill: color-mix(in srgb, var(--good) 70%, #000 22%) !important;
+}
+
+.g-parent-complete .bar-label {
+  fill: var(--accent-on) !important;
+  font-family: var(--font-hanken) !important;
+  font-weight: 600 !important;
+}
+
+.g-child-complete .bar {
+  fill: color-mix(in srgb, var(--good) 20%, var(--ui-surface-3)) !important;
+  outline: 1px solid var(--good) !important;
+}
+
+.g-child-complete .bar-progress {
+  fill: var(--good) !important;
+  opacity: 0.85;
+}
+
+.g-child-complete .bar-label {
+  fill: var(--ui-text) !important;
+  font-family: var(--font-hanken) !important;
+  font-weight: 500 !important;
+}
+
+/* frappe dark theme — its own dark selector doesn't match, so drive its vars ourselves */
+[data-mantine-color-scheme="dark"] .gantt-container,
+[data-mantine-color-scheme="dark"] .gantt-wrap {
+  --g-row-color: var(--ui-surface);
+  --g-bg-color: var(--ui-surface-2);
+  --g-bg-color-hover: var(--ui-surface-3);
+  --g-tick-color: var(--ui-border);
+  --g-tick-color-thick: var(--ui-border-strong);
+  --g-text-muted: var(--ui-text-3);
+  --g-text-light: #ffffff;
+  --g-text-dark: var(--ui-text);
+  --g-weekend-label-color: var(--ui-text-3);
+  --g-weekend-highlight-color: var(--ui-surface-2);
+  --g-header-background: var(--ui-surface);
+  --g-border-color: var(--ui-border);
+  --g-progress-color: var(--ui-surface-3);
+  --g-handle-color: var(--ui-text-2);
+  --g-holiday-color: var(--ui-surface-2);
+  --g-today-highlight: var(--accent-soft);
+}
+
+[data-mantine-color-scheme="dark"] .gantt .grid-header {
+  fill: var(--ui-surface) !important;
+}
+
+[data-mantine-color-scheme="dark"] .gantt .lower-text,
+[data-mantine-color-scheme="dark"] .gantt .upper-text {
+  fill: var(--ui-text-2) !important;
+}
+
+[data-mantine-color-scheme="dark"] .gantt-container .current-upper {
+  background: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+}
+
+[data-mantine-color-scheme="dark"] .gantt-container .side-header {
+  background: var(--ui-surface) !important;
+}
+
+/* ---- avatars ---- */
+.av {
+  flex: none;
+  border-radius: 50%;
+  background: var(--avatar-bg);
+  color: var(--avatar-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 10px var(--font-hanken), sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* ---- left rows ---- */
+.lrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ui-border);
+  transition: background 0.12s;
+}
+
+.lrow:hover {
+  background: var(--ui-surface-2);
+}
+
+.chev {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--ui-text-3);
+  transition: transform 0.18s ease;
+  display: inline-flex;
+}
+
+.chev.open {
+  transform: rotate(90deg);
+}
+
+/* mobile mini-gantt */
+.mscale {
+  position: relative;
+  height: 16px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.mtick {
+  position: absolute;
+  top: 0;
+  font: 500 9px var(--font-jetbrains), monospace;
+  color: var(--ui-text-3);
+  transform: translateX(-50%);
+}
+
+.mbar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 9px;
+  border-radius: 5px;
+}
+
+.scrollhide::-webkit-scrollbar {
+  height: 7px;
+  width: 7px;
+}
+
+.scrollhide::-webkit-scrollbar-thumb {
+  background: var(--ui-border-strong);
+  border-radius: 99px;
+}
+
+.scrollhide::-webkit-scrollbar-track {
+  background: transparent;
+}
