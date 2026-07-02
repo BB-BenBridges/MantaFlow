@@ -50,7 +50,8 @@ export function fmtRange(start: string, end: string) {
 
 export function projectSpan(p: ProjectDTO): { start: string; end: string; progress: number } {
   if (p.tasks.length === 0) {
-    return { start: p.startDate ?? "", end: p.endDate ?? "", progress: 0 };
+    const progress = p.status === "good" ? 100 : p.status === "accent" ? 50 : 0;
+    return { start: p.startDate ?? "", end: p.endDate ?? "", progress };
   }
   const starts = p.tasks.map((t) => ms(t.start));
   const ends = p.tasks.map((t) => ms(t.end));

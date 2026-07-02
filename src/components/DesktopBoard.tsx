@@ -366,7 +366,7 @@ export function DesktopBoard({
                     style={{
                       fontSize: 13,
                       fontWeight: isProj ? 600 : 500,
-                      color: complete ? "var(--ui-text-3)" : isProj ? "var(--ui-text)" : "var(--ui-text-2)",
+                      color: isProj ? "var(--ui-text)" : complete ? "var(--ui-text-3)" : "var(--ui-text-2)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
