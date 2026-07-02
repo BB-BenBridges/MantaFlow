@@ -23,11 +23,25 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
   useEffect(() => {
     let cancelled = false;
 
-    async function init() {
+    async function apply() {
+      // Already have a live instance - just swap its task list in place
+      // instead of tearing down and rebuilding the whole chart, which is
+      // what made expand/collapse feel sluggish.
+      if (ganttRef.current) {
+        if (tasks.length === 0) {
+          containerRef.current!.innerHTML = "";
+          ganttRef.current = null;
+        } else {
+          ganttRef.current.refresh(tasks);
+        }
+        return;
+      }
+
+      if (tasks.length === 0) return;
+
       const { default: GanttCtor } = await import("frappe-gantt");
       if (cancelled || !containerRef.current) return;
       containerRef.current.innerHTML = "";
-      if (tasks.length === 0) return;
 
       // Show the year in the upper header for the Day/Week views so a
       // month label (e.g. "December" -> "January") doesn't leave it
@@ -73,7 +87,7 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
       ganttRef.current.change_view_mode(viewMode);
     }
 
-    init();
+    apply();
     return () => {
       cancelled = true;
     };

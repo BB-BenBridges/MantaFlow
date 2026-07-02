@@ -63,6 +63,8 @@ export async function importJiraCsv(csvText: string): Promise<ImportJiraCsvResul
         initials: initialsOf(p.person || p.name),
         status: p.status,
         order: startingOrder + projectIndex,
+        startDate: p.startDate,
+        endDate: p.endDate,
         tasks: {
           create: p.tasks.map((t, taskIndex) => ({
             name: t.name,

@@ -148,6 +148,8 @@ export interface ImportedProject {
   name: string;
   person: string | null;
   status: ProjectDTO["status"];
+  startDate: Date | null;
+  endDate: Date | null;
   tasks: ImportedTask[];
 }
 
@@ -184,14 +186,16 @@ interface ProjectAccumulator {
   name: string;
   person: string | null;
   statusIssue: JiraIssue | null;
+  ownStart: Date | null;
+  ownEnd: Date | null;
   tasks: ImportedTask[];
 }
 
 /**
  * Groups a flat Jira issue export into a project hierarchy: top-level issues (no
- * parent) become projects, and every issue - including the top-level one itself -
- * becomes a task under its owning project, since the board only renders projects
- * that have at least one task.
+ * parent) become projects, and every other issue becomes a task under its owning
+ * project. A top-level issue that has no children becomes a childless project,
+ * using its own dates/status directly rather than being duplicated as a task.
  */
 export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] {
   const byKey = new Map(issues.map((i) => [i.key, i]));
@@ -200,7 +204,7 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
   function ensureProject(key: string, fallbackName: string, assignee: string, statusIssue: JiraIssue | null) {
     let p = projects.get(key);
     if (!p) {
-      p = { name: fallbackName || key, person: assignee || null, statusIssue, tasks: [] };
+      p = { name: fallbackName || key, person: assignee || null, statusIssue, ownStart: null, ownEnd: null, tasks: [] };
       projects.set(key, p);
     }
     return p;
@@ -216,6 +220,14 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
       owner || (issue.parentKey ? null : issue)
     );
 
+    if (issue.key === ownerKey) {
+      // This issue defines the project itself, not a child task under it.
+      const { start, end } = resolveDates(issue);
+      project.ownStart = start;
+      project.ownEnd = end;
+      continue;
+    }
+
     const { start, end } = resolveDates(issue);
     project.tasks.push({
       name: issue.summary || issue.key,
@@ -228,18 +240,24 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
 
   const result: ImportedProject[] = [];
   for (const p of projects.values()) {
-    if (p.tasks.length === 0) continue;
+    if (p.tasks.length === 0 && !p.ownStart) continue;
     p.tasks.sort((a, b) => a.start.getTime() - b.start.getTime());
     result.push({
       name: p.name,
       person: p.person,
       status: p.statusIssue ? statusFor(p.statusIssue) : "idle",
+      startDate: p.tasks.length === 0 ? p.ownStart : null,
+      endDate: p.tasks.length === 0 ? p.ownEnd : null,
       tasks: p.tasks,
     });
   }
 
-  result.sort((a, b) => a.tasks[0].start.getTime() - b.tasks[0].start.getTime());
+  result.sort((a, b) => sortKey(a).getTime() - sortKey(b).getTime());
   return result;
+}
+
+function sortKey(p: ImportedProject): Date {
+  return p.tasks[0]?.start ?? p.startDate ?? new Date(0);
 }
 
 export function parseJiraCsvToProjects(csvText: string): ImportedProject[] {

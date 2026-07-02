@@ -91,10 +91,10 @@ export function MobileBoard({
                 key={r.id}
                 className="lrow"
                 style={{ minHeight: 46, padding: "0 14px", flexDirection: "column", alignItems: "stretch", gap: 5, justifyContent: "center" }}
-                onClick={isProj ? () => toggle(r.id) : undefined}
+                onClick={isProj && r.hasTasks ? () => toggle(r.id) : undefined}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: mpad }}>
-                  <ChevronIcon size={13} className={r.open ? "open" : ""} style={{ visibility: isProj ? "visible" : "hidden" }} />
+                  <ChevronIcon size={13} className={r.open ? "open" : ""} style={{ visibility: isProj && r.hasTasks ? "visible" : "hidden" }} />
                   <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18 }}>
                     {r.initials}
                   </div>

@@ -356,9 +356,9 @@ export function DesktopBoard({
                   key={r.id}
                   className="lrow"
                   style={{ height: 44, paddingLeft: isProj ? 14 : 40, paddingRight: 14 }}
-                  onClick={isProj ? () => toggle(r.id) : undefined}
+                  onClick={isProj && r.hasTasks ? () => toggle(r.id) : undefined}
                 >
-                  <ChevronIcon className={r.open ? "open" : ""} style={{ visibility: isProj ? "visible" : "hidden" }} />
+                  <ChevronIcon className={r.open ? "open" : ""} style={{ visibility: isProj && r.hasTasks ? "visible" : "hidden" }} />
                   <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18 }}>
                     {r.initials}
                   </div>

@@ -19,6 +19,8 @@ export async function getProjects(): Promise<ProjectDTO[]> {
     person: p.person,
     initials: p.initials,
     status: p.status,
+    startDate: p.startDate ? toDateStr(p.startDate) : null,
+    endDate: p.endDate ? toDateStr(p.endDate) : null,
     tasks: p.tasks.map((t) => ({
       id: t.id,
       name: t.name,

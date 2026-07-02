@@ -20,5 +20,7 @@ export interface ProjectDTO {
   person: string | null;
   initials: string;
   status: "accent" | "good" | "warn" | "idle";
+  startDate: string | null; // YYYY-MM-DD, used when the project has no tasks
+  endDate: string | null; // YYYY-MM-DD, used when the project has no tasks
   tasks: TaskDTO[];
 }

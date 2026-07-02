@@ -26,6 +26,7 @@ export interface VisibleRow {
   end: string;
   progress: number;
   open: boolean;
+  hasTasks: boolean;
 }
 
 export function ms(dateStr: string) {
@@ -49,7 +50,7 @@ export function fmtRange(start: string, end: string) {
 
 export function projectSpan(p: ProjectDTO): { start: string; end: string; progress: number } {
   if (p.tasks.length === 0) {
-    return { start: "", end: "", progress: 0 };
+    return { start: p.startDate ?? "", end: p.endDate ?? "", progress: 0 };
   }
   const starts = p.tasks.map((t) => ms(t.start));
   const ends = p.tasks.map((t) => ms(t.end));
@@ -118,8 +119,9 @@ export function visibleRows(
       end: span.end,
       progress: span.progress,
       open: !!expanded[p.id],
+      hasTasks: p.tasks.length > 0,
     });
-    if (expanded[p.id]) {
+    if (expanded[p.id] && p.tasks.length > 0) {
       const tasks = p.tasks.slice();
       if (byOwner) {
         tasks.sort(
@@ -142,6 +144,7 @@ export function visibleRows(
           end: t.end,
           progress: t.progress,
           open: false,
+          hasTasks: false,
         });
       }
     }
