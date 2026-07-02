@@ -1,4 +1,4 @@
-import type { OrderBy, ProjectDTO } from "./types";
+import type { OrderBy, ProjectDTO, SortBy } from "./types";
 
 export interface VisibleRow {
   kind: "project" | "task";
@@ -45,19 +45,36 @@ export function projectSpan(p: ProjectDTO): { start: string; end: string; progre
   return { start: toDateStr(start), end: toDateStr(end), progress: Math.round(progress) };
 }
 
+function compareBySort(sortBy: SortBy, a: { name: string; end: string; progress: number }, b: { name: string; end: string; progress: number }) {
+  switch (sortBy) {
+    case "dueDate":
+      return ms(a.end) - ms(b.end);
+    case "progress":
+      return b.progress - a.progress;
+    case "name":
+      return a.name.localeCompare(b.name);
+  }
+}
+
 export function visibleRows(
   projects: ProjectDTO[],
   orderBy: OrderBy,
   expanded: Record<string, boolean>,
-  hideCompleted = false
+  hideCompleted = false,
+  sortBy: SortBy = "dueDate"
 ): VisibleRow[] {
   const out: VisibleRow[] = [];
   const byOwner = orderBy === "owner";
+  const spans = new Map(projects.map((p) => [p.id, projectSpan(p)]));
   const sorted = projects.slice();
-  if (byOwner) sorted.sort((a, b) => (a.person || "").localeCompare(b.person || ""));
+  if (byOwner) {
+    sorted.sort((a, b) => (a.person || "").localeCompare(b.person || ""));
+  } else {
+    sorted.sort((a, b) => compareBySort(sortBy, { name: a.name, ...spans.get(a.id)! }, { name: b.name, ...spans.get(b.id)! }));
+  }
 
   for (const p of sorted) {
-    const span = projectSpan(p);
+    const span = spans.get(p.id)!;
     if (!span.start || !span.end) continue;
     if (hideCompleted && span.progress >= 100) continue;
     out.push({
@@ -79,6 +96,8 @@ export function visibleRows(
         tasks.sort(
           (a, b) => (a.person || "").localeCompare(b.person || "") || ms(a.start) - ms(b.start)
         );
+      } else {
+        tasks.sort((a, b) => compareBySort(sortBy, a, b));
       }
       for (const t of tasks) {
         if (hideCompleted && t.progress >= 100) continue;

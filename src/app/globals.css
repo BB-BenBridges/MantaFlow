@@ -121,6 +121,71 @@ a {
   color: var(--ui-text);
 }
 
+.toolbar-group-label {
+  font: 600 11px var(--font-jetbrains), monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ui-text-3);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--ui-border-strong);
+  flex: none;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 20px 40px -16px rgba(0, 0, 0, 0.25);
+  padding: 6px;
+  z-index: 20;
+}
+
+.popover-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font: 500 13px var(--font-hanken), sans-serif;
+  color: var(--ui-text-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.popover-row:hover {
+  background: var(--ui-surface-3);
+  color: var(--ui-text);
+}
+
+.popover-row.on {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.badge-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-on);
+  font: 700 9.5px var(--font-jetbrains), monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ---- frappe overrides ---- */
 .gantt-wrap {
   flex: 1;

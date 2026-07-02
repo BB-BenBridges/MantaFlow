@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useMediaQuery } from "@mantine/hooks";
-import type { ProjectDTO, OrderBy, ViewMode } from "@/lib/types";
+import type { ProjectDTO, OrderBy, SortBy, ViewMode } from "@/lib/types";
 import { visibleRows, windowFor, monthTicks } from "@/lib/gantt-logic";
 import { DesktopBoard } from "./DesktopBoard";
 import { MobileBoard } from "./MobileBoard";
@@ -14,6 +14,7 @@ interface GanttAppProps {
 export function GanttApp({ projects }: GanttAppProps) {
   const isMobile = useMediaQuery("(max-width: 780px)");
   const [orderBy, setOrderBy] = useState<OrderBy>("project");
+  const [sortBy, setSortBy] = useState<SortBy>("dueDate");
   const [viewMode, setViewMode] = useState<ViewMode>("Week");
   const [hideCompleted, setHideCompleted] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
@@ -28,8 +29,8 @@ export function GanttApp({ projects }: GanttAppProps) {
   };
 
   const rows = useMemo(
-    () => visibleRows(projects, orderBy, expanded, hideCompleted),
-    [projects, orderBy, expanded, hideCompleted]
+    () => visibleRows(projects, orderBy, expanded, hideCompleted, sortBy),
+    [projects, orderBy, expanded, hideCompleted, sortBy]
   );
   const win = useMemo(() => windowFor(projects), [projects]);
   const months = useMemo(() => monthTicks(win.start, win.end), [win]);
@@ -38,6 +39,8 @@ export function GanttApp({ projects }: GanttAppProps) {
     rows,
     orderBy,
     setOrderBy,
+    sortBy,
+    setSortBy,
     viewMode,
     setViewMode,
     toggle,

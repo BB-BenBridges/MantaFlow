@@ -1,4 +1,5 @@
 export type OrderBy = "project" | "owner";
+export type SortBy = "dueDate" | "progress" | "name";
 export type ViewMode = "Day" | "Week" | "Month";
 export type Theme = "light" | "dark";
 

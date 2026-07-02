@@ -72,3 +72,30 @@ export function CheckCircleIcon({ size = 13 }: { size?: number }) {
     </svg>
   );
 }
+
+export function FilterIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5h16l-6.5 7.5V19l-3 1.5v-8z" />
+    </svg>
+  );
+}
+
+export function SortIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 3v18M7 3L3.5 6.5M7 3l3.5 3.5" />
+      <path d="M17 21V3M17 21l3.5-3.5M17 21l-3.5-3.5" />
+    </svg>
+  );
+}
+
+export function MoreIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <circle cx="5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="19" cy="12" r="1.6" />
+    </svg>
+  );
+}
