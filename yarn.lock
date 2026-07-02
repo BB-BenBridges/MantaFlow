@@ -3690,6 +3690,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mantaflow@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "mantaflow@workspace:."
+  dependencies:
+    "@clerk/nextjs": "npm:^7.5.10"
+    "@mantine/core": "npm:^9.4.1"
+    "@mantine/dates": "npm:^9.4.1"
+    "@mantine/hooks": "npm:^9.4.1"
+    "@prisma/client": "npm:^6"
+    "@types/node": "npm:^26.0.1"
+    "@types/react": "npm:^19"
+    "@types/react-dom": "npm:^19"
+    dayjs: "npm:^1.11.21"
+    eslint: "npm:^9"
+    eslint-config-next: "npm:16.2.9"
+    frappe-gantt: "npm:^1.2.2"
+    next: "npm:16.2.9"
+    postcss: "npm:^8.5.16"
+    postcss-preset-mantine: "npm:^1.18.0"
+    postcss-simple-vars: "npm:^7.0.1"
+    prisma: "npm:^6"
+    react: "npm:19.2.4"
+    react-dom: "npm:19.2.4"
+    server-only: "npm:^0.0.1"
+    tsx: "npm:^4.22.4"
+    typescript: "npm:^5"
+  languageName: unknown
+  linkType: soft
+
 "math-intrinsics@npm:^1.1.0":
   version: 1.1.0
   resolution: "math-intrinsics@npm:1.1.0"
@@ -4926,35 +4955,6 @@ __metadata:
   checksum: 10c0/7022e8cb04a8ceccc0689f2c731743fa2aab2e3c3f559f7dbc37b65ef7d5913049b427284eded2ec0765c5db5ff72dd7939fe2ae15785ff422cef2116c95d798
   languageName: node
   linkType: hard
-
-"tempo-gantt@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "tempo-gantt@workspace:."
-  dependencies:
-    "@clerk/nextjs": "npm:^7.5.10"
-    "@mantine/core": "npm:^9.4.1"
-    "@mantine/dates": "npm:^9.4.1"
-    "@mantine/hooks": "npm:^9.4.1"
-    "@prisma/client": "npm:^6"
-    "@types/node": "npm:^26.0.1"
-    "@types/react": "npm:^19"
-    "@types/react-dom": "npm:^19"
-    dayjs: "npm:^1.11.21"
-    eslint: "npm:^9"
-    eslint-config-next: "npm:16.2.9"
-    frappe-gantt: "npm:^1.2.2"
-    next: "npm:16.2.9"
-    postcss: "npm:^8.5.16"
-    postcss-preset-mantine: "npm:^1.18.0"
-    postcss-simple-vars: "npm:^7.0.1"
-    prisma: "npm:^6"
-    react: "npm:19.2.4"
-    react-dom: "npm:19.2.4"
-    server-only: "npm:^0.0.1"
-    tsx: "npm:^4.22.4"
-    typescript: "npm:^5"
-  languageName: unknown
-  linkType: soft
 
 "tinyexec@npm:^1.2.4":
   version: 1.2.4

@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tempo — IT Delivery",
+  title: "MantaFlow — IT Delivery",
   description: "Gantt planning for IT delivery teams",
 };
 

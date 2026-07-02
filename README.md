@@ -1,4 +1,4 @@
-# Tempo — IT Delivery Gantt
+# MantaFlow — IT Delivery Gantt
 
 A Linear-style Gantt planning app for tracking IT delivery projects, built from the design handoff in `../Gantt App.dc.html`.
 

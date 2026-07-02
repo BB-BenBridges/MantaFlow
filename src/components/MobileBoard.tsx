@@ -33,7 +33,7 @@ export function MobileBoard({
       <div className="app" style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 15px", borderBottom: "1px solid var(--ui-border)" }}>
           <LogoMark size={20} />
-          <span style={{ fontWeight: 600, fontSize: 14 }}>Tempo</span>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>MantaFlow</span>
           <div style={{ flex: 1 }} />
           <button
             className="iconbtn"
