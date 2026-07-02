@@ -1,4 +1,4 @@
-import type { VisibleRow } from "@/lib/gantt-logic";
+import type { FilterState, VisibleRow } from "@/lib/gantt-logic";
 import type { OrderBy, ProjectDTO, SortBy, ViewMode } from "@/lib/types";
 
 export interface BoardProps {
@@ -13,6 +13,7 @@ export interface BoardProps {
   win: { start: number; end: number };
   months: { label: string; left: string }[];
   projects: ProjectDTO[];
-  hideCompleted: boolean;
-  setHideCompleted: (v: boolean) => void;
+  filters: FilterState;
+  setFilters: (v: FilterState) => void;
+  owners: string[];
 }

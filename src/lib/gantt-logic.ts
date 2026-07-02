@@ -1,5 +1,19 @@
 import type { OrderBy, ProjectDTO, SortBy } from "./types";
 
+export interface FilterState {
+  hideCompleted: boolean;
+  hideUnassigned: boolean;
+  overdueOnly: boolean;
+  owners: string[];
+}
+
+export const DEFAULT_FILTERS: FilterState = {
+  hideCompleted: false,
+  hideUnassigned: false,
+  overdueOnly: false,
+  owners: [],
+};
+
 export interface VisibleRow {
   kind: "project" | "task";
   id: string;
@@ -56,11 +70,26 @@ function compareBySort(sortBy: SortBy, a: { name: string; end: string; progress:
   }
 }
 
+function isOverdue(end: string, progress: number) {
+  return progress < 100 && ms(end) < Date.now();
+}
+
+function passesFilters(
+  filters: FilterState,
+  row: { person: string | null; end: string; progress: number }
+) {
+  if (filters.hideCompleted && row.progress >= 100) return false;
+  if (filters.hideUnassigned && !row.person) return false;
+  if (filters.overdueOnly && !isOverdue(row.end, row.progress)) return false;
+  if (filters.owners.length > 0 && (!row.person || !filters.owners.includes(row.person))) return false;
+  return true;
+}
+
 export function visibleRows(
   projects: ProjectDTO[],
   orderBy: OrderBy,
   expanded: Record<string, boolean>,
-  hideCompleted = false,
+  filters: FilterState = DEFAULT_FILTERS,
   sortBy: SortBy = "dueDate"
 ): VisibleRow[] {
   const out: VisibleRow[] = [];
@@ -76,7 +105,7 @@ export function visibleRows(
   for (const p of sorted) {
     const span = spans.get(p.id)!;
     if (!span.start || !span.end) continue;
-    if (hideCompleted && span.progress >= 100) continue;
+    if (!passesFilters(filters, { person: p.person, end: span.end, progress: span.progress })) continue;
     out.push({
       kind: "project",
       id: p.id,
@@ -100,7 +129,7 @@ export function visibleRows(
         tasks.sort((a, b) => compareBySort(sortBy, a, b));
       }
       for (const t of tasks) {
-        if (hideCompleted && t.progress >= 100) continue;
+        if (!passesFilters(filters, { person: t.person, end: t.end, progress: t.progress })) continue;
         out.push({
           kind: "task",
           id: t.id,
@@ -118,6 +147,17 @@ export function visibleRows(
     }
   }
   return out;
+}
+
+export function uniqueOwners(projects: ProjectDTO[]): string[] {
+  const set = new Set<string>();
+  for (const p of projects) {
+    if (p.person) set.add(p.person);
+    for (const t of p.tasks) {
+      if (t.person) set.add(t.person);
+    }
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
 }
 
 export function windowFor(projects: ProjectDTO[]): { start: number; end: number } {

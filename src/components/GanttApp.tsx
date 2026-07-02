@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMediaQuery } from "@mantine/hooks";
 import type { ProjectDTO, OrderBy, SortBy, ViewMode } from "@/lib/types";
-import { visibleRows, windowFor, monthTicks } from "@/lib/gantt-logic";
+import { visibleRows, windowFor, monthTicks, uniqueOwners, DEFAULT_FILTERS, type FilterState } from "@/lib/gantt-logic";
 import { DesktopBoard } from "./DesktopBoard";
 import { MobileBoard } from "./MobileBoard";
 
@@ -16,7 +16,7 @@ export function GanttApp({ projects }: GanttAppProps) {
   const [orderBy, setOrderBy] = useState<OrderBy>("project");
   const [sortBy, setSortBy] = useState<SortBy>("dueDate");
   const [viewMode, setViewMode] = useState<ViewMode>("Week");
-  const [hideCompleted, setHideCompleted] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     if (projects[0]) initial[projects[0].id] = true;
@@ -29,11 +29,12 @@ export function GanttApp({ projects }: GanttAppProps) {
   };
 
   const rows = useMemo(
-    () => visibleRows(projects, orderBy, expanded, hideCompleted, sortBy),
-    [projects, orderBy, expanded, hideCompleted, sortBy]
+    () => visibleRows(projects, orderBy, expanded, filters, sortBy),
+    [projects, orderBy, expanded, filters, sortBy]
   );
   const win = useMemo(() => windowFor(projects), [projects]);
   const months = useMemo(() => monthTicks(win.start, win.end), [win]);
+  const owners = useMemo(() => uniqueOwners(projects), [projects]);
 
   const props = {
     rows,
@@ -47,8 +48,9 @@ export function GanttApp({ projects }: GanttAppProps) {
     win,
     months,
     projects,
-    hideCompleted,
-    setHideCompleted,
+    filters,
+    setFilters,
+    owners,
   };
 
   return isMobile ? <MobileBoard {...props} /> : <DesktopBoard {...props} />;

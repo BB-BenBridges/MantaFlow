@@ -21,8 +21,8 @@ export function MobileBoard({
   toggle,
   win,
   months,
-  hideCompleted,
-  setHideCompleted,
+  filters,
+  setFilters,
 }: BoardProps) {
   const { toggleColorScheme } = useMantineColorScheme();
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,9 +37,9 @@ export function MobileBoard({
           <div style={{ flex: 1 }} />
           <button
             className="iconbtn"
-            style={{ background: hideCompleted ? "var(--accent-soft)" : undefined, color: hideCompleted ? "var(--accent)" : undefined }}
-            onClick={() => setHideCompleted(!hideCompleted)}
-            title={hideCompleted ? "Show completed" : "Hide completed"}
+            style={{ background: filters.hideCompleted ? "var(--accent-soft)" : undefined, color: filters.hideCompleted ? "var(--accent)" : undefined }}
+            onClick={() => setFilters({ ...filters, hideCompleted: !filters.hideCompleted })}
+            title={filters.hideCompleted ? "Show completed" : "Hide completed"}
           >
             <CheckCircleIcon />
           </button>

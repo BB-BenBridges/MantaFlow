@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMantineColorScheme } from "@mantine/core";
 import { UserButton } from "@clerk/nextjs";
 import {
@@ -19,6 +19,7 @@ import { NewProjectModal } from "./NewProjectModal";
 import { ImportJiraModal } from "./ImportJiraModal";
 import type { BoardProps } from "./board-types";
 import type { SortBy, ViewMode } from "@/lib/types";
+import { DEFAULT_FILTERS, type FilterState } from "@/lib/gantt-logic";
 
 const VIEW_MODES: ViewMode[] = ["Day", "Week", "Month"];
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -29,6 +30,18 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 
 type OpenMenu = "filters" | "sort" | "more" | null;
 
+function Checkbox({ checked }: { checked: boolean }) {
+  return (
+    <span className={`checkbox-box${checked ? " on" : ""}`}>
+      {checked && (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent-on)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 export function DesktopBoard({
   rows,
   orderBy,
@@ -38,13 +51,57 @@ export function DesktopBoard({
   viewMode,
   setViewMode,
   toggle,
-  hideCompleted,
-  setHideCompleted,
+  filters,
+  setFilters,
+  owners,
 }: BoardProps) {
   const { toggleColorScheme } = useMantineColorScheme();
   const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
+  const [draftFilters, setDraftFilters] = useState<FilterState>(filters);
+  const [sidebarWidth, setSidebarWidth] = useState(264);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const resizeState = useRef<{ startX: number; startWidth: number; width: number } | null>(null);
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    resizeState.current = { startX: e.clientX, startWidth: sidebarWidth, width: sidebarWidth };
+    document.body.style.cursor = "col-resize";
+
+    const onMove = (ev: MouseEvent) => {
+      if (!resizeState.current || !sidebarRef.current) return;
+      const delta = ev.clientX - resizeState.current.startX;
+      const next = Math.min(480, Math.max(160, resizeState.current.startWidth + delta));
+      resizeState.current.width = next;
+      sidebarRef.current.style.width = `${next}px`;
+    };
+    const onUp = () => {
+      if (resizeState.current) setSidebarWidth(resizeState.current.width);
+      resizeState.current = null;
+      document.body.style.cursor = "";
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
+  const openFilters = () => {
+    setDraftFilters(filters);
+    setOpenMenu(openMenu === "filters" ? null : "filters");
+  };
+
+  const toggleDraft = (key: "hideCompleted" | "hideUnassigned" | "overdueOnly") => {
+    setDraftFilters((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleDraftOwner = (owner: string) => {
+    setDraftFilters((prev) => ({
+      ...prev,
+      owners: prev.owners.includes(owner) ? prev.owners.filter((o) => o !== owner) : [...prev.owners, owner],
+    }));
+  };
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -57,7 +114,11 @@ export function DesktopBoard({
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const filterCount = hideCompleted ? 1 : 0;
+  const filterCount =
+    (filters.hideCompleted ? 1 : 0) +
+    (filters.hideUnassigned ? 1 : 0) +
+    (filters.overdueOnly ? 1 : 0) +
+    (filters.owners.length > 0 ? 1 : 0);
   const sortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Sort";
 
   const ganttTasks: GanttChartTask[] = rows.map((r) => {
@@ -163,24 +224,56 @@ export function DesktopBoard({
                 background: filterCount > 0 ? "var(--accent-soft)" : undefined,
                 color: filterCount > 0 ? "var(--accent)" : undefined,
               }}
-              onClick={() => setOpenMenu(openMenu === "filters" ? null : "filters")}
+              onClick={openFilters}
             >
               <FilterIcon />
               Filters
               {filterCount > 0 && <span className="badge-count">{filterCount}</span>}
             </button>
             {openMenu === "filters" && (
-              <div className="popover" style={{ width: 220 }}>
-                <div className="popover-row" onClick={() => setHideCompleted(!hideCompleted)}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <CheckCircleIcon size={13} />
-                    Hide completed
-                  </span>
-                  {hideCompleted && (
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth={2.6} strokeLinecap="round">
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
+              <div className="popover" style={{ width: 240 }}>
+                <div className="popover-section-label">Status</div>
+                <div className="popover-row" onClick={() => toggleDraft("hideCompleted")}>
+                  <span>Hide completed</span>
+                  <Checkbox checked={draftFilters.hideCompleted} />
+                </div>
+                <div className="popover-row" onClick={() => toggleDraft("hideUnassigned")}>
+                  <span>Hide unassigned</span>
+                  <Checkbox checked={draftFilters.hideUnassigned} />
+                </div>
+                <div className="popover-row" onClick={() => toggleDraft("overdueOnly")}>
+                  <span>Overdue only</span>
+                  <Checkbox checked={draftFilters.overdueOnly} />
+                </div>
+
+                {owners.length > 0 && (
+                  <>
+                    <div className="popover-section-label">Owner</div>
+                    {owners.map((owner) => (
+                      <div key={owner} className="popover-row" onClick={() => toggleDraftOwner(owner)}>
+                        <span>{owner}</span>
+                        <Checkbox checked={draftFilters.owners.includes(owner)} />
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                <div className="popover-footer">
+                  <button
+                    className="popover-reset"
+                    onClick={() => setDraftFilters(DEFAULT_FILTERS)}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    className="popover-apply"
+                    onClick={() => {
+                      setFilters(draftFilters);
+                      setOpenMenu(null);
+                    }}
+                  >
+                    Apply
+                  </button>
                 </div>
               </div>
             )}
@@ -237,7 +330,7 @@ export function DesktopBoard({
 
         {/* body */}
         <div style={{ display: "flex", flex: 1, minHeight: 0, overflowY: "auto" }} className="scrollhide">
-          <div style={{ width: 264, flex: "none", borderRight: "1px solid var(--ui-border)", background: "var(--ui-surface)" }}>
+          <div ref={sidebarRef} style={{ width: sidebarWidth, flex: "none", position: "relative", borderRight: "1px solid var(--ui-border)", background: "var(--ui-surface)" }}>
             <div
               style={{
                 height: 85,
@@ -291,6 +384,18 @@ export function DesktopBoard({
                 </div>
               );
             })}
+            <div
+              onMouseDown={startResize}
+              style={{
+                position: "absolute",
+                top: 0,
+                right: -3,
+                bottom: 0,
+                width: 6,
+                cursor: "col-resize",
+                zIndex: 6,
+              }}
+            />
           </div>
           <GanttChart tasks={ganttTasks} viewMode={viewMode} />
         </div>
