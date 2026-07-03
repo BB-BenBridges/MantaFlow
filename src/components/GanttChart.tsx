@@ -6,9 +6,12 @@ import type Gantt from "frappe-gantt";
 import type { GanttTask, GanttViewMode } from "frappe-gantt";
 import { fmtRange } from "@/lib/gantt-logic";
 import { ZOOM_LEVELS, type ViewMode } from "@/lib/types";
+import { updateTaskDates, updateTaskProgress, updateProjectDates } from "@/server/actions";
 
 export interface GanttChartTask extends GanttTask {
   assignee?: string;
+  kind?: "project" | "task";
+  hasTasks?: boolean;
 }
 
 interface GanttChartProps {
@@ -51,15 +54,48 @@ function scheduleCenterBarLabels(container: HTMLElement) {
   requestAnimationFrame(() => requestAnimationFrame(() => centerBarLabels(container)));
 }
 
+function toDateStr(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// A project with child tasks shows a span/progress rolled up from those
+// tasks, so dragging it wouldn't map to a single editable field. A project
+// with no tasks has its own start/end and is editable directly.
+function isNonEditableProjectBar(task: GanttChartTask) {
+  return task.kind === "project" && !!task.hasTasks;
+}
+
 export function GanttChart({ tasks, viewMode }: GanttChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<Gantt | null>(null);
   const scrollCleanupRef = useRef<(() => void) | null>(null);
+  const tasksRef = useRef<GanttChartTask[]>(tasks);
+
+  // Project bars are a computed rollup of their child tasks, so they can't be
+  // dragged/resized like a task bar. Block the drag before it starts (capture
+  // phase runs before frappe-gantt's own bubble-phase mousedown handler on
+  // the SVG) instead of letting it start and silently snapping back.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const blockProjectBarDrag = (e: MouseEvent) => {
+      const wrapper = (e.target as HTMLElement).closest(".bar-wrapper");
+      if (wrapper?.classList.contains("g-parent") || wrapper?.classList.contains("g-parent-complete")) {
+        e.stopPropagation();
+      }
+    };
+    container.addEventListener("mousedown", blockProjectBarDrag, true);
+    return () => container.removeEventListener("mousedown", blockProjectBarDrag, true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function apply() {
+      tasksRef.current = tasks;
       // Already have a live instance - just swap its task list in place
       // instead of tearing down and rebuilding the whole chart, which is
       // what made expand/collapse feel sluggish.
@@ -70,9 +106,16 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
           containerRef.current!.innerHTML = "";
           ganttRef.current = null;
         } else {
+          // `refresh` re-renders via `change_view_mode()` with no
+          // maintain_pos, which resets scroll_to "start" - save/restore the
+          // scroll position ourselves so a background data refresh (e.g.
+          // after persisting a drag) doesn't jump the view back to the
+          // beginning of the timeline.
+          const scrollEl = containerRef.current?.querySelector(".gantt-container") as HTMLElement | null;
+          const scrollLeft = scrollEl?.scrollLeft;
           ganttRef.current.refresh(tasks);
-          const scrollEl = containerRef.current?.querySelector(".gantt-container");
-          if (scrollEl) scheduleCenterBarLabels(scrollEl as HTMLElement);
+          if (scrollEl && scrollLeft !== undefined) scrollEl.scrollLeft = scrollLeft;
+          if (scrollEl) scheduleCenterBarLabels(scrollEl);
         }
         return;
       }
@@ -120,7 +163,30 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
         bar_corner_radius: 4,
         container_height: "auto",
         infinite_padding: false,
-        readonly: true,
+        readonly: false,
+        move_dependencies: false,
+        on_date_change: (task, start, end) => {
+          const t = task as GanttChartTask;
+          if (isNonEditableProjectBar(t)) {
+            ganttRef.current?.refresh(tasksRef.current);
+            return;
+          }
+          if (t.kind === "project") {
+            updateProjectDates(t.id, toDateStr(start), toDateStr(end));
+            return;
+          }
+          updateTaskDates(t.id, toDateStr(start), toDateStr(end));
+        },
+        on_progress_change: (task, progress) => {
+          const t = task as GanttChartTask;
+          // Projects only store a status, not a numeric progress value -
+          // there's nothing to persist a progress-handle drag to.
+          if (t.kind === "project") {
+            ganttRef.current?.refresh(tasksRef.current);
+            return;
+          }
+          updateTaskProgress(t.id, progress);
+        },
         today_button: false,
         view_mode_select: false,
         lines: "horizontal",

@@ -125,7 +125,11 @@ export function DesktopBoard({
 
   const ganttTasks: GanttChartTask[] = rows.map((r) => {
     const complete = r.progress >= 100;
-    const base = r.kind === "project" ? "g-parent" : "g-child";
+    // A project with no child tasks has its own editable start/end, so it
+    // gets a distinct class that stays draggable/resizable; a project with
+    // tasks shows a computed rollup span and stays non-interactive.
+    const isLeafProject = r.kind === "project" && !r.hasTasks;
+    const base = r.kind === "project" ? (isLeafProject ? "g-parent-leaf" : "g-parent") : "g-child";
     return {
       id: r.id,
       name: r.name,
@@ -134,6 +138,8 @@ export function DesktopBoard({
       progress: r.progress,
       assignee: r.person || "",
       custom_class: complete ? `${base}-complete` : base,
+      kind: r.kind,
+      hasTasks: r.hasTasks,
     };
   });
 

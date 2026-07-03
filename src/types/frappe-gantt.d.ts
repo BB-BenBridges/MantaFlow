@@ -50,6 +50,11 @@ declare module "frappe-gantt" {
     popup_on?: "click" | "hover";
     popup?: false | ((ctx: GanttPopupContext) => void);
     auto_move_label?: boolean;
+    readonly_dates?: boolean;
+    readonly_progress?: boolean;
+    move_dependencies?: boolean;
+    on_date_change?: (task: GanttTask, start: Date, end: Date) => void;
+    on_progress_change?: (task: GanttTask, progress: number) => void;
     [key: string]: unknown;
   }
 

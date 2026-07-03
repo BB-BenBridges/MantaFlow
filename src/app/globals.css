@@ -297,16 +297,38 @@ a {
   fill: var(--accent) !important;
   stroke: none !important;
   outline: none !important;
+  cursor: not-allowed !important;
 }
 
-.g-parent .bar-progress {
+.g-parent .handle {
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+.g-parent .bar-progress,
+.g-parent-leaf .bar-progress {
   fill: color-mix(in srgb, var(--accent) 70%, #000 22%) !important;
 }
 
-.g-parent .bar-label {
+.g-parent .bar-label,
+.g-parent-leaf .bar-label {
   fill: #1b1b1f !important;
   font-family: var(--font-hanken) !important;
   font-weight: 600 !important;
+}
+
+/* a project with no child tasks has its own editable start/end - drag and
+   resize like a task bar, just without a progress handle (projects only
+   store a status, not a numeric progress value) */
+.g-parent-leaf .bar {
+  fill: var(--accent) !important;
+  stroke: none !important;
+  outline: none !important;
+}
+
+.g-parent-leaf .handle.progress {
+  pointer-events: none !important;
+  opacity: 0 !important;
 }
 
 .g-child .bar {
@@ -334,16 +356,35 @@ a {
   fill: var(--good) !important;
   stroke: none !important;
   outline: none !important;
+  cursor: not-allowed !important;
 }
 
-.g-parent-complete .bar-progress {
+.g-parent-complete .handle {
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+.g-parent-complete .bar-progress,
+.g-parent-leaf-complete .bar-progress {
   fill: color-mix(in srgb, var(--good) 70%, #000 22%) !important;
 }
 
-.g-parent-complete .bar-label {
+.g-parent-complete .bar-label,
+.g-parent-leaf-complete .bar-label {
   fill: #1b1b1f !important;
   font-family: var(--font-hanken) !important;
   font-weight: 600 !important;
+}
+
+.g-parent-leaf-complete .bar {
+  fill: var(--good) !important;
+  stroke: none !important;
+  outline: none !important;
+}
+
+.g-parent-leaf-complete .handle.progress {
+  pointer-events: none !important;
+  opacity: 0 !important;
 }
 
 .g-child-complete .bar {

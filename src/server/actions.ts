@@ -39,6 +39,48 @@ export async function createProject(input: CreateProjectInput) {
   revalidatePath("/");
 }
 
+export async function updateTaskDates(id: string, start: string, end: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  await prisma.task.update({
+    where: { id },
+    data: {
+      start: new Date(`${start}T00:00:00`),
+      end: new Date(`${end}T00:00:00`),
+    },
+  });
+
+  revalidatePath("/");
+}
+
+export async function updateTaskProgress(id: string, progress: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  await prisma.task.update({
+    where: { id },
+    data: { progress: Math.max(0, Math.min(100, Math.round(progress))) },
+  });
+
+  revalidatePath("/");
+}
+
+export async function updateProjectDates(id: string, start: string, end: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  await prisma.project.update({
+    where: { id },
+    data: {
+      startDate: new Date(`${start}T00:00:00`),
+      endDate: new Date(`${end}T00:00:00`),
+    },
+  });
+
+  revalidatePath("/");
+}
+
 export interface ImportJiraCsvResult {
   projects: number;
   tasks: number;
