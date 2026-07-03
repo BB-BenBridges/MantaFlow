@@ -64,5 +64,9 @@ declare module "frappe-gantt" {
     constructor(wrapper: HTMLElement | string | SVGElement, tasks: GanttTask[], options?: GanttOptions);
     change_view_mode(mode: string, maintain_pos?: boolean): void;
     refresh(tasks: GanttTask[]): void;
+    // Undocumented internals - populated by `change_view_mode`/`setup_dates`,
+    // used to translate between scroll position and date for zoom centering.
+    gantt_start: Date;
+    config: { column_width: number; step: number; unit: string };
   }
 }

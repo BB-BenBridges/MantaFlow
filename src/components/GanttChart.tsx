@@ -56,6 +56,35 @@ function scheduleCenterBarLabels(container: HTMLElement) {
   requestAnimationFrame(() => requestAnimationFrame(() => centerBarLabels(container)));
 }
 
+// Rough, self-consistent day-equivalents for each grid unit - matches the
+// approximation frappe-gantt itself uses for padding (e.g. "2m", "2y") in
+// its `convert_scales` helper. Precision doesn't matter here, only that the
+// same factor is used going into and out of the pixel<->date conversion.
+const UNIT_TO_MS: Record<string, number> = {
+  day: 86_400_000,
+  month: 86_400_000 * 30,
+  year: 86_400_000 * 365,
+};
+
+// Epoch-ms represented by one pixel at the gantt's current zoom level.
+function msPerPixel(gantt: Gantt) {
+  const unitMs = UNIT_TO_MS[gantt.config.unit] ?? UNIT_TO_MS.day;
+  return (unitMs * gantt.config.step) / gantt.config.column_width;
+}
+
+// The date under the horizontal center of the visible viewport.
+function centerDate(gantt: Gantt, scrollEl: HTMLElement) {
+  const centerX = scrollEl.scrollLeft + scrollEl.clientWidth / 2;
+  return gantt.gantt_start.getTime() + centerX * msPerPixel(gantt);
+}
+
+// The scrollLeft that puts `dateMs` back at the horizontal center of the
+// viewport, given the gantt's (possibly just-changed) zoom level.
+function scrollLeftToCenter(gantt: Gantt, scrollEl: HTMLElement, dateMs: number) {
+  const x = (dateMs - gantt.gantt_start.getTime()) / msPerPixel(gantt);
+  return Math.max(0, x - scrollEl.clientWidth / 2);
+}
+
 function toDateStr(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -246,12 +275,19 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
   useEffect(() => {
     if (ganttRef.current) {
       try {
-        // `maintain_pos` keeps the current scroll position instead of
-        // re-triggering the `scroll_to: "start"` smooth-scroll animation on
-        // every zoom step, which is what made zooming feel sluggish.
-        ganttRef.current.change_view_mode(viewMode, true);
-        const scrollEl = containerRef.current?.querySelector(".gantt-container");
-        if (scrollEl) scheduleCenterBarLabels(scrollEl as HTMLElement);
+        const gantt = ganttRef.current;
+        const scrollEl = containerRef.current?.querySelector(".gantt-container") as HTMLElement | null;
+        // Column width varies by zoom level, so the date under the old
+        // scrollLeft isn't the date under the new one - capture which date
+        // was centered before switching and re-center on it after, instead
+        // of just keeping the raw pixel offset (`maintain_pos`), which lets
+        // the visible date range drift on every zoom step.
+        const dateMs = scrollEl ? centerDate(gantt, scrollEl) : null;
+        gantt.change_view_mode(viewMode, true);
+        if (scrollEl && dateMs !== null) {
+          scrollEl.scrollLeft = scrollLeftToCenter(gantt, scrollEl, dateMs);
+        }
+        if (scrollEl) scheduleCenterBarLabels(scrollEl);
       } catch {
         // ignore
       }
