@@ -1,18 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Modal, TextInput, Button, Stack, Group } from "@mantine/core";
+import { Modal, TextInput, Autocomplete, Button, Stack, Group } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import { createProject } from "@/server/actions";
+import { capitalizeName } from "@/lib/gantt-logic";
 import { RichTextInput } from "./RichTextInput";
 
 interface NewProjectModalProps {
   opened: boolean;
+  owners: string[];
   onClose: () => void;
 }
 
-export function NewProjectModal({ opened, onClose }: NewProjectModalProps) {
+export function NewProjectModal({ opened, owners, onClose }: NewProjectModalProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
@@ -42,7 +44,7 @@ export function NewProjectModal({ opened, onClose }: NewProjectModalProps) {
     }
     setError(null);
     startTransition(async () => {
-      await createProject({ name, description, person, start, end });
+      await createProject({ name, description, person: capitalizeName(person.trim()), start, end });
       reset();
       onClose();
       router.refresh();
@@ -74,11 +76,13 @@ export function NewProjectModal({ opened, onClose }: NewProjectModalProps) {
           value={description}
           onChange={setDescription}
         />
-        <TextInput
+        <Autocomplete
           label="Responsible person"
           placeholder="Aisha Rahman"
+          data={owners}
           value={person}
-          onChange={(e) => setPerson(e.currentTarget.value)}
+          onChange={setPerson}
+          onBlur={() => setPerson((p) => capitalizeName(p.trim()))}
         />
         <Group grow>
           <DateInput label="Start date" value={start} onChange={setStart} valueFormat="YYYY-MM-DD" />

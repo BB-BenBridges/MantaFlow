@@ -427,9 +427,11 @@ export function DesktopBoard({
           <GanttChart tasks={ganttTasks} viewMode={viewMode} onBarClick={setEditingItem} />
         </div>
       </div>
-      <NewProjectModal opened={modalOpen} onClose={() => setModalOpen(false)} />
+      <NewProjectModal opened={modalOpen} owners={owners} onClose={() => setModalOpen(false)} />
       <ImportJiraModal opened={importOpen} onClose={() => setImportOpen(false)} />
-      {editingItem && <EditItemModal key={editingItem.id} item={editingItem} onClose={() => setEditingItem(null)} />}
+      {editingItem && (
+        <EditItemModal key={editingItem.id} item={editingItem} owners={owners} onClose={() => setEditingItem(null)} />
+      )}
     </div>
   );
 }

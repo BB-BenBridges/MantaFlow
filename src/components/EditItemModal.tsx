@@ -1,22 +1,24 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Modal, TextInput, Button, Stack, Group, Text } from "@mantine/core";
+import { Modal, TextInput, Autocomplete, Button, Stack, Group, Text } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import { updateTask, updateProject } from "@/server/actions";
+import { capitalizeName } from "@/lib/gantt-logic";
 import type { GanttChartTask } from "./GanttChart";
 import { RichTextInput } from "./RichTextInput";
 
 interface EditItemModalProps {
   item: GanttChartTask;
+  owners: string[];
   onClose: () => void;
 }
 
 // Mounted only while a bar is being edited (see the `key`-ed usage in
 // DesktopBoard), so the initial state below only needs to run once per item
 // rather than re-syncing via an effect whenever `item` changes.
-export function EditItemModal({ item, onClose }: EditItemModalProps) {
+export function EditItemModal({ item, owners, onClose }: EditItemModalProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState(item.name);
@@ -41,14 +43,15 @@ export function EditItemModal({ item, onClose }: EditItemModalProps) {
       return;
     }
     setError(null);
+    const responsiblePerson = capitalizeName(person.trim());
     startTransition(async () => {
       if (isTask) {
-        await updateTask(item.id, { name, description, person, start: start!, end: end! });
+        await updateTask(item.id, { name, description, person: responsiblePerson, start: start!, end: end! });
       } else {
         await updateProject(item.id, {
           name,
           description,
-          person,
+          person: responsiblePerson,
           ...(datesEditable ? { start: start!, end: end! } : {}),
         });
       }
@@ -73,11 +76,13 @@ export function EditItemModal({ item, onClose }: EditItemModalProps) {
           value={description}
           onChange={setDescription}
         />
-        <TextInput
+        <Autocomplete
           label="Responsible person"
           placeholder="Aisha Rahman"
+          data={owners}
           value={person}
-          onChange={(e) => setPerson(e.currentTarget.value)}
+          onChange={setPerson}
+          onBlur={() => setPerson((p) => capitalizeName(p.trim()))}
         />
         {datesEditable ? (
           <Group grow>

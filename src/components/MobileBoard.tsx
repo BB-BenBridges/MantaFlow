@@ -21,6 +21,7 @@ export function MobileBoard({
   months,
   filters,
   setFilters,
+  owners,
 }: BoardProps) {
   const { toggleColorScheme } = useMantineColorScheme();
   const [modalOpen, setModalOpen] = useState(false);
@@ -182,7 +183,7 @@ export function MobileBoard({
           </button>
         </div>
       </div>
-      <NewProjectModal opened={modalOpen} onClose={() => setModalOpen(false)} />
+      <NewProjectModal opened={modalOpen} owners={owners} onClose={() => setModalOpen(false)} />
       <ImportJiraModal opened={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );

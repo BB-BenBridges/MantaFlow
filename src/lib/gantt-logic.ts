@@ -156,6 +156,13 @@ export function visibleRows(
   return out;
 }
 
+export function capitalizeName(name: string): string {
+  return name
+    .split(" ")
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+    .join(" ");
+}
+
 export function uniqueOwners(projects: ProjectDTO[]): string[] {
   const set = new Set<string>();
   for (const p of projects) {
