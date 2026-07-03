@@ -49,6 +49,7 @@ declare module "frappe-gantt" {
     scroll_to?: "start" | "end" | "today";
     popup_on?: "click" | "hover";
     popup?: false | ((ctx: GanttPopupContext) => void);
+    auto_move_label?: boolean;
     [key: string]: unknown;
   }
 

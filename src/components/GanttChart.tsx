@@ -16,9 +16,45 @@ interface GanttChartProps {
   viewMode: ViewMode;
 }
 
+// For bars wider than the viewport, frappe-gantt centers the label on the
+// full bar, which can leave it scrolled out of view. Re-center each label
+// on the portion of its bar that's actually visible instead.
+function centerBarLabels(container: HTMLElement) {
+  const scrollLeft = container.scrollLeft;
+  const clientWidth = container.clientWidth;
+
+  container.querySelectorAll(".bar-wrapper").forEach((wrapper) => {
+    const bar = wrapper.querySelector(".bar");
+    const label = wrapper.querySelector(".bar-label");
+    if (!bar || !label || label.classList.contains("big")) return;
+
+    const barX = parseFloat(bar.getAttribute("x") || "0");
+    const barWidth = parseFloat(bar.getAttribute("width") || "0");
+    const barEnd = barX + barWidth;
+
+    const visibleStart = Math.max(barX, scrollLeft);
+    const visibleEnd = Math.min(barEnd, scrollLeft + clientWidth);
+    if (visibleEnd <= visibleStart) return;
+
+    const labelWidth = (label as SVGGraphicsElement).getBBox().width;
+    const x = Math.max(
+      barX,
+      Math.min((visibleStart + visibleEnd) / 2 - labelWidth / 2, barEnd - labelWidth),
+    );
+    label.setAttribute("x", String(x));
+  });
+}
+
+// Labels get their final size a tick after the bars are drawn, so wait a
+// couple of frames before measuring and positioning them.
+function scheduleCenterBarLabels(container: HTMLElement) {
+  requestAnimationFrame(() => requestAnimationFrame(() => centerBarLabels(container)));
+}
+
 export function GanttChart({ tasks, viewMode }: GanttChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<Gantt | null>(null);
+  const scrollCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,10 +65,14 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
       // what made expand/collapse feel sluggish.
       if (ganttRef.current) {
         if (tasks.length === 0) {
+          scrollCleanupRef.current?.();
+          scrollCleanupRef.current = null;
           containerRef.current!.innerHTML = "";
           ganttRef.current = null;
         } else {
           ganttRef.current.refresh(tasks);
+          const scrollEl = containerRef.current?.querySelector(".gantt-container");
+          if (scrollEl) scheduleCenterBarLabels(scrollEl as HTMLElement);
         }
         return;
       }
@@ -85,6 +125,18 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
       // Passing a custom `view_modes` array makes frappe-gantt default to
       // the first entry regardless of `view_mode`, so set it explicitly.
       ganttRef.current.change_view_mode(viewMode);
+
+      const scrollEl = containerRef.current.querySelector(".gantt-container");
+      if (scrollEl) {
+        const onScrollOrResize = () => centerBarLabels(scrollEl as HTMLElement);
+        scrollEl.addEventListener("scroll", onScrollOrResize, { passive: true });
+        window.addEventListener("resize", onScrollOrResize);
+        scrollCleanupRef.current = () => {
+          scrollEl.removeEventListener("scroll", onScrollOrResize);
+          window.removeEventListener("resize", onScrollOrResize);
+        };
+        scheduleCenterBarLabels(scrollEl as HTMLElement);
+      }
     }
 
     apply();
@@ -95,9 +147,18 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
   }, [tasks]);
 
   useEffect(() => {
+    return () => {
+      scrollCleanupRef.current?.();
+      scrollCleanupRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
     if (ganttRef.current) {
       try {
         ganttRef.current.change_view_mode(viewMode);
+        const scrollEl = containerRef.current?.querySelector(".gantt-container");
+        if (scrollEl) scheduleCenterBarLabels(scrollEl as HTMLElement);
       } catch {
         // ignore
       }
