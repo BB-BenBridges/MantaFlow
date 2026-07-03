@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useMediaQuery } from "@mantine/hooks";
 import type { ProjectDTO, OrderBy, SortBy, ViewMode } from "@/lib/types";
+import { DEFAULT_VIEW_MODE } from "@/lib/types";
 import { visibleRows, windowFor, monthTicks, uniqueOwners, DEFAULT_FILTERS, type FilterState } from "@/lib/gantt-logic";
 import { DesktopBoard } from "./DesktopBoard";
 import { MobileBoard } from "./MobileBoard";
@@ -15,7 +16,7 @@ export function GanttApp({ projects }: GanttAppProps) {
   const isMobile = useMediaQuery("(max-width: 780px)");
   const [orderBy, setOrderBy] = useState<OrderBy>("project");
   const [sortBy, setSortBy] = useState<SortBy>("dueDate");
-  const [viewMode, setViewMode] = useState<ViewMode>("Week");
+  const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_VIEW_MODE);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};

@@ -121,6 +121,16 @@ a {
   color: var(--ui-text);
 }
 
+.iconbtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.iconbtn:disabled:hover {
+  background: transparent;
+  color: var(--ui-text-2);
+}
+
 .toolbar-group-label {
   font: 600 11px var(--font-jetbrains), monospace;
   letter-spacing: 0.05em;

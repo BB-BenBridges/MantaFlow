@@ -21,6 +21,15 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "MantaFlow — IT Delivery",
   description: "Gantt planning for IT delivery teams",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/mantaflow-icon.svg", type: "image/svg+xml" },
+      { url: "/mantaflow-icon-256.png", sizes: "256x256", type: "image/png" },
+      { url: "/mantaflow-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/mantaflow-icon-512.png", sizes: "512x512", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({

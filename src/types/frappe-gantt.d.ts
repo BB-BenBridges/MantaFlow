@@ -32,7 +32,7 @@ declare module "frappe-gantt" {
   }
 
   export interface GanttOptions {
-    view_mode?: "Hour" | "Quarter Day" | "Half Day" | "Day" | "Week" | "Month" | "Year";
+    view_mode?: string;
     view_modes?: GanttViewMode[];
     bar_height?: number;
     padding?: number;

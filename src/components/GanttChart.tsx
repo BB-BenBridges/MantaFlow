@@ -5,7 +5,7 @@ import "@/app/frappe-gantt.css";
 import type Gantt from "frappe-gantt";
 import type { GanttTask, GanttViewMode } from "frappe-gantt";
 import { fmtRange } from "@/lib/gantt-logic";
-import type { ViewMode } from "@/lib/types";
+import { ZOOM_LEVELS, type ViewMode } from "@/lib/types";
 
 export interface GanttChartTask extends GanttTask {
   assignee?: string;
@@ -94,13 +94,25 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
             : "",
       });
 
+      // Base mode per time unit - each zoom level reuses one of these and
+      // only overrides `name`/`column_width`, so switching between zoom
+      // levels within the same unit stays cheap (same date grid, just a
+      // different pixel width per column) instead of triggering a full,
+      // slow rebuild across a much finer/coarser step like Hour or Year.
+      const baseModeByUnit: Record<string, GanttViewMode> = {
+        Day: withYear(GanttCtor.VIEW_MODE.DAY),
+        Week: withYear(GanttCtor.VIEW_MODE.WEEK),
+        Month: GanttCtor.VIEW_MODE.MONTH,
+        Year: GanttCtor.VIEW_MODE.YEAR,
+      };
+
       ganttRef.current = new GanttCtor(containerRef.current, tasks, {
         view_mode: viewMode,
-        view_modes: [
-          withYear(GanttCtor.VIEW_MODE.DAY),
-          withYear(GanttCtor.VIEW_MODE.WEEK),
-          GanttCtor.VIEW_MODE.MONTH,
-        ],
+        view_modes: ZOOM_LEVELS.map((zoom) => ({
+          ...baseModeByUnit[zoom.unit],
+          name: zoom.name,
+          column_width: zoom.columnWidth,
+        })),
         bar_height: 26,
         padding: 18,
         upper_header_height: 45,

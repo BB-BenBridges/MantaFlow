@@ -8,6 +8,7 @@ import {
   ChevronIcon,
   SunMoonIcon,
   PlusIcon,
+  MinusIcon,
   UploadIcon,
   CheckCircleIcon,
   FilterIcon,
@@ -18,10 +19,10 @@ import { GanttChart, type GanttChartTask } from "./GanttChart";
 import { NewProjectModal } from "./NewProjectModal";
 import { ImportJiraModal } from "./ImportJiraModal";
 import type { BoardProps } from "./board-types";
-import type { SortBy, ViewMode } from "@/lib/types";
+import type { SortBy } from "@/lib/types";
+import { ZOOM_LEVELS } from "@/lib/types";
 import { DEFAULT_FILTERS, type FilterState } from "@/lib/gantt-logic";
 
-const VIEW_MODES: ViewMode[] = ["Day", "Week", "Month"];
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "dueDate", label: "Due date" },
   { value: "progress", label: "Progress" },
@@ -59,6 +60,7 @@ export function DesktopBoard({
   const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
+  const zoomIndex = ZOOM_LEVELS.findIndex((z) => z.name === viewMode);
   const [draftFilters, setDraftFilters] = useState<FilterState>(filters);
   const [sidebarWidth, setSidebarWidth] = useState(264);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -200,13 +202,29 @@ export function DesktopBoard({
 
           <div className="toolbar-divider" />
 
-          <span className="toolbar-group-label">View</span>
-          <div className="seg">
-            {VIEW_MODES.map((mode) => (
-              <button key={mode} className={viewMode === mode ? "on" : ""} onClick={() => setViewMode(mode)}>
-                {mode}
-              </button>
-            ))}
+          <span className="toolbar-group-label">Zoom</span>
+          <div className="seg" style={{ alignItems: "center", gap: 3 }}>
+            <button
+              className="iconbtn"
+              style={{ width: 34, height: 34 }}
+              disabled={zoomIndex <= 0}
+              onClick={() => setViewMode(ZOOM_LEVELS[zoomIndex - 1].name)}
+              title="Zoom in"
+            >
+              <PlusIcon size={16} />
+            </button>
+            <span style={{ font: "500 12.5px var(--font-hanken), sans-serif", color: "var(--ui-text-2)", padding: "0 8px", minWidth: 52, textAlign: "center" }}>
+              {ZOOM_LEVELS[zoomIndex]?.label}
+            </span>
+            <button
+              className="iconbtn"
+              style={{ width: 34, height: 34 }}
+              disabled={zoomIndex >= ZOOM_LEVELS.length - 1}
+              onClick={() => setViewMode(ZOOM_LEVELS[zoomIndex + 1].name)}
+              title="Zoom out"
+            >
+              <MinusIcon size={16} />
+            </button>
           </div>
 
           <div className="toolbar-divider" />

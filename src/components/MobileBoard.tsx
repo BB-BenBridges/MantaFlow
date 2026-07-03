@@ -3,14 +3,12 @@
 import { useState } from "react";
 import { useMantineColorScheme } from "@mantine/core";
 import { UserButton } from "@clerk/nextjs";
-import { LogoMark, ChevronIcon, SunMoonIcon, PlusIcon, UploadIcon, CheckCircleIcon } from "./icons";
+import { LogoMark, ChevronIcon, SunMoonIcon, PlusIcon, MinusIcon, UploadIcon, CheckCircleIcon } from "./icons";
 import { NewProjectModal } from "./NewProjectModal";
 import { ImportJiraModal } from "./ImportJiraModal";
 import { fmtRange, ms, pct } from "@/lib/gantt-logic";
 import type { BoardProps } from "./board-types";
-import type { ViewMode } from "@/lib/types";
-
-const VIEW_MODES: ViewMode[] = ["Day", "Week", "Month"];
+import { ZOOM_LEVELS } from "@/lib/types";
 
 export function MobileBoard({
   rows,
@@ -27,6 +25,7 @@ export function MobileBoard({
   const { toggleColorScheme } = useMantineColorScheme();
   const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const zoomIndex = ZOOM_LEVELS.findIndex((z) => z.name === viewMode);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", padding: "16px 10px" }}>
@@ -50,12 +49,28 @@ export function MobileBoard({
         </div>
 
         <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--ui-border)", display: "flex", gap: 8 }}>
-          <div className="seg" style={{ flex: 1 }}>
-            {VIEW_MODES.map((mode) => (
-              <button key={mode} style={{ flex: 1 }} className={viewMode === mode ? "on" : ""} onClick={() => setViewMode(mode)}>
-                {mode}
-              </button>
-            ))}
+          <div className="seg" style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 3 }}>
+            <button
+              className="iconbtn"
+              style={{ width: 34, height: 34 }}
+              disabled={zoomIndex <= 0}
+              onClick={() => setViewMode(ZOOM_LEVELS[zoomIndex - 1].name)}
+              title="Zoom in"
+            >
+              <PlusIcon size={16} />
+            </button>
+            <span style={{ font: "500 12.5px var(--font-hanken), sans-serif", color: "var(--ui-text-2)", padding: "0 4px", flex: 1, textAlign: "center" }}>
+              {ZOOM_LEVELS[zoomIndex]?.label}
+            </span>
+            <button
+              className="iconbtn"
+              style={{ width: 34, height: 34 }}
+              disabled={zoomIndex >= ZOOM_LEVELS.length - 1}
+              onClick={() => setViewMode(ZOOM_LEVELS[zoomIndex + 1].name)}
+              title="Zoom out"
+            >
+              <MinusIcon size={16} />
+            </button>
           </div>
           <div className="seg" style={{ flex: "none" }}>
             <button className={orderBy === "project" ? "on" : ""} onClick={() => setOrderBy("project")}>

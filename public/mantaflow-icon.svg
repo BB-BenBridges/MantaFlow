@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5f8df3"/>
+      <stop offset="0.5" stop-color="#3969d9"/>
+      <stop offset="1" stop-color="#263690"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="manta">
+      <path transform="translate(256 205) rotate(-15)" d="M 0 -84
+        C -4 -89 -6 -96 -10 -102
+        C -14 -109 -22 -114 -27 -107
+        C -31 -100 -32 -91 -46 -84
+        C -92 -66 -150 -42 -186 -12
+        C -190 -9 -190 -6 -184 -5
+        C -128 -12 -66 8 -8.2 66.5
+        L -7.3 72.8 L -6.1 79.0 L -4.6 85.1 L -3.0 91.0 L -1.0 96.9 L 1.1 102.6 L 3.4 108.2 L 5.9 113.7 L 8.6 119.1 L 11.4 124.3 L 14.4 129.5 L 17.5 134.5 L 20.7 139.5 L 24.0 144.3 L 27.5 149.0 L 31.0 153.6 L 34.6 158.1 L 38.3 162.5 L 42.0 166.8 L 45.8 170.9 L 49.5 175.0 L 53.3 178.9 L 57.1 182.8
+        L 58.9 181.2 L 55.4 177.1 L 51.9 172.9 L 48.5 168.6 L 45.2 164.2 L 42.0 159.6 L 38.8 155.0 L 35.7 150.3 L 32.7 145.5 L 29.9 140.6 L 27.2 135.6 L 24.6 130.5 L 22.2 125.4 L 19.9 120.2 L 17.8 114.9 L 15.9 109.6 L 14.1 104.2 L 12.6 98.8 L 11.3 93.3 L 10.2 87.8 L 9.3 82.3 L 8.7 76.7 L 8.3 71.1 L 8.2 65.5
+        C 66 8 128 -12 184 -5
+        C 190 -6 190 -9 186 -12
+        C 150 -42 92 -66 46 -84
+        C 32 -91 31 -100 27 -107
+        C 22 -114 14 -109 10 -102
+        C 6 -96 4 -89 0 -84 Z"/>
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="116" fill="url(#sheen)"/>
+
+  <!-- Faint timeline grid -->
+  <g stroke="#ffffff" stroke-opacity="0.10" stroke-width="3">
+    <line x1="150" y1="60" x2="150" y2="452"/>
+    <line x1="256" y1="60" x2="256" y2="452"/>
+    <line x1="362" y1="60" x2="362" y2="452"/>
+  </g>
+
+  <!-- Manta sliced into Gantt rows: thick summary bar (head), then task bars.
+       Row 4 is positioned so the tail junction sits inside it. -->
+  <g fill="#ffffff" clip-path="url(#manta)">
+    <rect x="0" y="84"  width="512" height="50"/>
+    <rect x="0" y="146" width="512" height="36"/>
+    <rect x="0" y="194" width="512" height="36"/>
+    <rect x="0" y="242" width="512" height="36"/>
+  </g>
+
+  <!-- Solid tail (same edge coords as the silhouette, overlapping row 4, so it grows out of the last bar) -->
+  <path transform="translate(256 205) rotate(-15)" fill="#ffffff" d="M -8.2 66.5 L -7.3 72.8 L -6.1 79.0 L -4.6 85.1 L -3.0 91.0 L -1.0 96.9 L 1.1 102.6 L 3.4 108.2 L 5.9 113.7 L 8.6 119.1 L 11.4 124.3 L 14.4 129.5 L 17.5 134.5 L 20.7 139.5 L 24.0 144.3 L 27.5 149.0 L 31.0 153.6 L 34.6 158.1 L 38.3 162.5 L 42.0 166.8 L 45.8 170.9 L 49.5 175.0 L 53.3 178.9 L 57.1 182.8 L 58.9 181.2 L 55.4 177.1 L 51.9 172.9 L 48.5 168.6 L 45.2 164.2 L 42.0 159.6 L 38.8 155.0 L 35.7 150.3 L 32.7 145.5 L 29.9 140.6 L 27.2 135.6 L 24.6 130.5 L 22.2 125.4 L 19.9 120.2 L 17.8 114.9 L 15.9 109.6 L 14.1 104.2 L 12.6 98.8 L 11.3 93.3 L 10.2 87.8 L 9.3 82.3 L 8.7 76.7 L 8.3 71.1 L 8.2 65.5 Z"/>
+
+  <!-- Floating milestone diamond beyond the tail tip -->
+  <rect x="383.7" y="377.0" width="22" height="22" rx="4.5" transform="rotate(45 394.7 388.0)" fill="#ffffff" opacity="0.95"/>
+</svg>

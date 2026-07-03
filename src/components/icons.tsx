@@ -1,23 +1,13 @@
 export function LogoMark({ size = 22 }: { size?: number }) {
   return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 6,
-        background: "var(--accent)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flex: "none",
-      }}
-    >
-      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 12 12" fill="none">
-        <rect x="1" y="2" width="7" height="2" rx="1" fill="var(--accent-on)" />
-        <rect x="3" y="5" width="8" height="2" rx="1" fill="var(--accent-on)" />
-        <rect x="1" y="8" width="5" height="2" rx="1" fill="var(--accent-on)" />
-      </svg>
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/mantaflow-icon.svg"
+      alt=""
+      width={size}
+      height={size}
+      style={{ borderRadius: 6, flex: "none" }}
+    />
   );
 }
 
@@ -52,6 +42,14 @@ export function PlusIcon({ size = 13 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+export function MinusIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
+      <path d="M5 12h14" />
     </svg>
   );
 }

@@ -1,0 +1,12 @@
+{
+  "name": "MantaFlow",
+  "short_name": "MantaFlow",
+  "icons": [
+    { "src": "/mantaflow-icon-256.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "/mantaflow-icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/mantaflow-icon-1024.png", "sizes": "1024x1024", "type": "image/png" }
+  ],
+  "theme_color": "#3969d9",
+  "background_color": "#3969d9",
+  "display": "standalone"
+}
