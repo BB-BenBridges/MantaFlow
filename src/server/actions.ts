@@ -171,6 +171,7 @@ export async function importJiraCsv(csvText: string): Promise<ImportJiraCsvResul
     await prisma.project.create({
       data: {
         name: p.name,
+        description: p.description,
         person: p.person,
         initials: initialsOf(p.person || p.name),
         status: p.status,
@@ -180,6 +181,7 @@ export async function importJiraCsv(csvText: string): Promise<ImportJiraCsvResul
         tasks: {
           create: p.tasks.map((t, taskIndex) => ({
             name: t.name,
+            description: t.description,
             person: t.person,
             initials: initialsOf(t.person || t.name),
             start: t.start,

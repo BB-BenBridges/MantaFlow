@@ -79,6 +79,7 @@ export function parseJiraDate(raw: string | undefined): Date | null {
 export interface JiraIssue {
   key: string;
   summary: string;
+  description: string;
   statusCategory: string;
   assignee: string;
   created: Date | null;
@@ -121,6 +122,7 @@ export function parseJiraIssues(csvText: string): JiraIssue[] {
     .map((row) => ({
       key: get(row, "Issue key"),
       summary: get(row, "Summary"),
+      description: get(row, "Description"),
       statusCategory: get(row, "Status Category"),
       assignee: get(row, "Assignee"),
       created: parseJiraDate(get(row, "Created")),
@@ -138,6 +140,7 @@ export function parseJiraIssues(csvText: string): JiraIssue[] {
 
 export interface ImportedTask {
   name: string;
+  description: string | null;
   person: string | null;
   start: Date;
   end: Date;
@@ -146,6 +149,7 @@ export interface ImportedTask {
 
 export interface ImportedProject {
   name: string;
+  description: string | null;
   person: string | null;
   status: ProjectDTO["status"];
   startDate: Date | null;
@@ -184,6 +188,7 @@ function statusFor(issue: JiraIssue): ProjectDTO["status"] {
 
 interface ProjectAccumulator {
   name: string;
+  description: string | null;
   person: string | null;
   statusIssue: JiraIssue | null;
   ownStart: Date | null;
@@ -201,10 +206,10 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
   const byKey = new Map(issues.map((i) => [i.key, i]));
   const projects = new Map<string, ProjectAccumulator>();
 
-  function ensureProject(key: string, fallbackName: string, assignee: string, statusIssue: JiraIssue | null) {
+  function ensureProject(key: string, fallbackName: string, description: string, assignee: string, statusIssue: JiraIssue | null) {
     let p = projects.get(key);
     if (!p) {
-      p = { name: fallbackName || key, person: assignee || null, statusIssue, ownStart: null, ownEnd: null, tasks: [] };
+      p = { name: fallbackName || key, description: description || null, person: assignee || null, statusIssue, ownStart: null, ownEnd: null, tasks: [] };
       projects.set(key, p);
     }
     return p;
@@ -216,6 +221,7 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
     const project = ensureProject(
       ownerKey,
       owner?.summary || issue.parentSummary || ownerKey,
+      owner?.description || "",
       owner?.assignee || issue.assignee,
       owner || (issue.parentKey ? null : issue)
     );
@@ -231,6 +237,7 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
     const { start, end } = resolveDates(issue);
     project.tasks.push({
       name: issue.summary || issue.key,
+      description: issue.description || null,
       person: issue.assignee || null,
       start,
       end,
@@ -244,6 +251,7 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
     p.tasks.sort((a, b) => a.start.getTime() - b.start.getTime());
     result.push({
       name: p.name,
+      description: p.description,
       person: p.person,
       status: p.statusIssue ? statusFor(p.statusIssue) : "idle",
       startDate: p.tasks.length === 0 ? p.ownStart : null,
