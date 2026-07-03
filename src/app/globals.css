@@ -526,3 +526,7 @@ a {
 .scrollhide::-webkit-scrollbar-track {
   background: transparent;
 }
+
+.rich-text-input .ProseMirror {
+  min-height: 160px;
+}

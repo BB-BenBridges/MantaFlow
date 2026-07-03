@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Modal, TextInput, Textarea, Button, Stack, Group } from "@mantine/core";
+import { Modal, TextInput, Button, Stack, Group } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import { createProject } from "@/server/actions";
+import { RichTextInput } from "./RichTextInput";
 
 interface NewProjectModalProps {
   opened: boolean;
@@ -56,6 +57,7 @@ export function NewProjectModal({ opened, onClose }: NewProjectModalProps) {
         onClose();
       }}
       title="New project"
+      size="lg"
     >
       <Stack gap="sm">
         <TextInput
@@ -66,13 +68,11 @@ export function NewProjectModal({ opened, onClose }: NewProjectModalProps) {
           error={error && !name.trim() ? error : undefined}
           data-autofocus
         />
-        <Textarea
+        <RichTextInput
           label="Description"
           placeholder="Optional summary of the project"
           value={description}
-          onChange={(e) => setDescription(e.currentTarget.value)}
-          autosize
-          minRows={2}
+          onChange={setDescription}
         />
         <TextInput
           label="Responsible person"

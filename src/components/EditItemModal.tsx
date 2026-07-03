@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Modal, TextInput, Textarea, Button, Stack, Group, Text } from "@mantine/core";
+import { Modal, TextInput, Button, Stack, Group, Text } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import { updateTask, updateProject } from "@/server/actions";
 import type { GanttChartTask } from "./GanttChart";
+import { RichTextInput } from "./RichTextInput";
 
 interface EditItemModalProps {
   item: GanttChartTask;
@@ -57,7 +58,7 @@ export function EditItemModal({ item, onClose }: EditItemModalProps) {
   }
 
   return (
-    <Modal opened onClose={onClose} title={isTask ? "Edit task" : "Edit project"}>
+    <Modal opened onClose={onClose} title={isTask ? "Edit task" : "Edit project"} size="lg">
       <Stack gap="sm">
         <TextInput
           label="Title"
@@ -66,13 +67,11 @@ export function EditItemModal({ item, onClose }: EditItemModalProps) {
           error={error && !name.trim() ? error : undefined}
           data-autofocus
         />
-        <Textarea
+        <RichTextInput
           label="Description"
           placeholder={isTask ? "Optional details about this task" : "Optional summary of the project"}
           value={description}
-          onChange={(e) => setDescription(e.currentTarget.value)}
-          autosize
-          minRows={2}
+          onChange={setDescription}
         />
         <TextInput
           label="Responsible person"

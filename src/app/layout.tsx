@@ -3,6 +3,7 @@ import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import "@mantine/core/styles.css";
+import "@mantine/tiptap/styles.css";
 import "./globals.css";
 import { theme } from "@/theme";
 
