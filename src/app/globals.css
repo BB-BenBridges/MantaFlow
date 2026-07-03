@@ -429,7 +429,7 @@ a {
   --g-progress-color: var(--ui-surface-3);
   --g-handle-color: var(--ui-text-2);
   --g-holiday-color: var(--ui-surface-2);
-  --g-today-highlight: var(--accent-soft);
+  --g-today-highlight: var(--accent);
 }
 
 [data-mantine-color-scheme="dark"] .gantt .grid-header {

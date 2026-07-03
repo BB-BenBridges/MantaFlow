@@ -202,7 +202,7 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
         today_button: false,
         view_mode_select: false,
         lines: "horizontal",
-        scroll_to: "start",
+        scroll_to: "today",
         popup_on: "hover",
         popup: (ctx) => {
           const t = ctx.task as GanttChartTask;
