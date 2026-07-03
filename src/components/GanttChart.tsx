@@ -168,7 +168,10 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
   useEffect(() => {
     if (ganttRef.current) {
       try {
-        ganttRef.current.change_view_mode(viewMode);
+        // `maintain_pos` keeps the current scroll position instead of
+        // re-triggering the `scroll_to: "start"` smooth-scroll animation on
+        // every zoom step, which is what made zooming feel sluggish.
+        ganttRef.current.change_view_mode(viewMode, true);
         const scrollEl = containerRef.current?.querySelector(".gantt-container");
         if (scrollEl) scheduleCenterBarLabels(scrollEl as HTMLElement);
       } catch {

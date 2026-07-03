@@ -56,7 +56,7 @@ declare module "frappe-gantt" {
   export default class Gantt {
     static VIEW_MODE: Record<string, GanttViewMode>;
     constructor(wrapper: HTMLElement | string | SVGElement, tasks: GanttTask[], options?: GanttOptions);
-    change_view_mode(mode: string): void;
+    change_view_mode(mode: string, maintain_pos?: boolean): void;
     refresh(tasks: GanttTask[]): void;
   }
 }
