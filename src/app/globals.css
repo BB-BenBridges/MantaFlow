@@ -294,7 +294,7 @@ a {
 }
 
 .g-parent .bar-label {
-  fill: var(--accent-on) !important;
+  fill: #1b1b1f !important;
   font-family: var(--font-hanken) !important;
   font-weight: 600 !important;
 }
@@ -310,13 +310,13 @@ a {
 }
 
 .g-child .bar-label {
-  fill: var(--ui-text) !important;
+  fill: #1b1b1f !important;
   font-family: var(--font-hanken) !important;
   font-weight: 500 !important;
 }
 
 [data-mantine-color-scheme="dark"] .g-child .bar {
-  fill: #232327 !important;
+  fill: #3a3a40 !important;
 }
 
 /* completed projects/tasks - distinct from the in-progress accent colour */
@@ -331,7 +331,7 @@ a {
 }
 
 .g-parent-complete .bar-label {
-  fill: var(--accent-on) !important;
+  fill: #1b1b1f !important;
   font-family: var(--font-hanken) !important;
   font-weight: 600 !important;
 }
@@ -347,9 +347,17 @@ a {
 }
 
 .g-child-complete .bar-label {
-  fill: var(--ui-text) !important;
+  fill: #1b1b1f !important;
   font-family: var(--font-hanken) !important;
   font-weight: 500 !important;
+}
+
+/* when a title is too wide for its bar, frappe-gantt renders it just past
+   the bar's edge over the row background instead of over the bar fill, so
+   it needs the page's text color rather than the bar's "on-fill" color;
+   ui-text-2 keeps it legible without matching the full-strength title color */
+.gantt .bar-wrapper .bar-label.big {
+  fill: var(--ui-text-2) !important;
 }
 
 /* frappe dark theme — its own dark selector doesn't match, so drive its vars ourselves */
