@@ -18,6 +18,7 @@ import {
 import { GanttChart, type GanttChartTask } from "./GanttChart";
 import { NewProjectModal } from "./NewProjectModal";
 import { ImportJiraModal } from "./ImportJiraModal";
+import { EditItemModal } from "./EditItemModal";
 import type { BoardProps } from "./board-types";
 import type { SortBy } from "@/lib/types";
 import { ZOOM_LEVELS } from "@/lib/types";
@@ -59,6 +60,7 @@ export function DesktopBoard({
   const { toggleColorScheme } = useMantineColorScheme();
   const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<GanttChartTask | null>(null);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const zoomIndex = ZOOM_LEVELS.findIndex((z) => z.name === viewMode);
   const [draftFilters, setDraftFilters] = useState<FilterState>(filters);
@@ -137,6 +139,7 @@ export function DesktopBoard({
       end: r.end,
       progress: r.progress,
       assignee: r.person || "",
+      description: r.description || "",
       custom_class: complete ? `${base}-complete` : base,
       kind: r.kind,
       hasTasks: r.hasTasks,
@@ -421,11 +424,12 @@ export function DesktopBoard({
               }}
             />
           </div>
-          <GanttChart tasks={ganttTasks} viewMode={viewMode} />
+          <GanttChart tasks={ganttTasks} viewMode={viewMode} onBarClick={setEditingItem} />
         </div>
       </div>
       <NewProjectModal opened={modalOpen} onClose={() => setModalOpen(false)} />
       <ImportJiraModal opened={importOpen} onClose={() => setImportOpen(false)} />
+      {editingItem && <EditItemModal key={editingItem.id} item={editingItem} onClose={() => setEditingItem(null)} />}
     </div>
   );
 }

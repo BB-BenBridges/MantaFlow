@@ -54,6 +54,38 @@ export async function updateTaskDates(id: string, start: string, end: string) {
   revalidatePath("/");
 }
 
+export interface UpdateTaskInput {
+  name: string;
+  description?: string;
+  person?: string;
+  start: string; // YYYY-MM-DD
+  end: string; // YYYY-MM-DD
+}
+
+export async function updateTask(id: string, input: UpdateTaskInput) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const name = input.name.trim();
+  if (!name) throw new Error("Task name is required");
+
+  const person = input.person?.trim() || null;
+
+  await prisma.task.update({
+    where: { id },
+    data: {
+      name,
+      description: input.description?.trim() || null,
+      person,
+      initials: initialsOf(person || name),
+      start: new Date(`${input.start}T00:00:00`),
+      end: new Date(`${input.end}T00:00:00`),
+    },
+  });
+
+  revalidatePath("/");
+}
+
 export async function updateTaskProgress(id: string, progress: number) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -61,6 +93,44 @@ export async function updateTaskProgress(id: string, progress: number) {
   await prisma.task.update({
     where: { id },
     data: { progress: Math.max(0, Math.min(100, Math.round(progress))) },
+  });
+
+  revalidatePath("/");
+}
+
+export interface UpdateProjectInput {
+  name: string;
+  description?: string;
+  person?: string;
+  // Omitted for a project with child tasks, since its span is a rollup
+  // computed from those tasks rather than a value stored on the project.
+  start?: string;
+  end?: string;
+}
+
+export async function updateProject(id: string, input: UpdateProjectInput) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const name = input.name.trim();
+  if (!name) throw new Error("Project name is required");
+
+  const person = input.person?.trim() || null;
+
+  await prisma.project.update({
+    where: { id },
+    data: {
+      name,
+      description: input.description?.trim() || null,
+      person,
+      initials: initialsOf(person || name),
+      ...(input.start && input.end
+        ? {
+            startDate: new Date(`${input.start}T00:00:00`),
+            endDate: new Date(`${input.end}T00:00:00`),
+          }
+        : {}),
+    },
   });
 
   revalidatePath("/");

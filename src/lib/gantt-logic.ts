@@ -19,6 +19,7 @@ export interface VisibleRow {
   id: string;
   projectId: string;
   name: string;
+  description: string | null;
   person: string | null;
   initials: string;
   status: "accent" | "good" | "warn" | "idle";
@@ -113,6 +114,7 @@ export function visibleRows(
       id: p.id,
       projectId: p.id,
       name: p.name,
+      description: p.description,
       person: p.person,
       initials: p.initials,
       status: p.status,
@@ -138,6 +140,7 @@ export function visibleRows(
           id: t.id,
           projectId: p.id,
           name: t.name,
+          description: t.description,
           person: t.person,
           initials: t.initials,
           status: "idle",

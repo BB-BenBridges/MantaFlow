@@ -55,6 +55,7 @@ declare module "frappe-gantt" {
     move_dependencies?: boolean;
     on_date_change?: (task: GanttTask, start: Date, end: Date) => void;
     on_progress_change?: (task: GanttTask, progress: number) => void;
+    on_click?: (task: GanttTask) => void;
     [key: string]: unknown;
   }
 

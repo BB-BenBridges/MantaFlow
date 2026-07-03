@@ -34,6 +34,7 @@ export type Theme = "light" | "dark";
 export interface TaskDTO {
   id: string;
   name: string;
+  description: string | null;
   person: string | null;
   initials: string;
   start: string; // YYYY-MM-DD

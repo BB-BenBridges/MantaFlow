@@ -10,6 +10,7 @@ import { updateTaskDates, updateTaskProgress, updateProjectDates } from "@/serve
 
 export interface GanttChartTask extends GanttTask {
   assignee?: string;
+  description?: string;
   kind?: "project" | "task";
   hasTasks?: boolean;
 }
@@ -17,6 +18,7 @@ export interface GanttChartTask extends GanttTask {
 interface GanttChartProps {
   tasks: GanttChartTask[];
   viewMode: ViewMode;
+  onBarClick?: (task: GanttChartTask) => void;
 }
 
 // For bars wider than the viewport, frappe-gantt centers the label on the
@@ -68,11 +70,18 @@ function isNonEditableProjectBar(task: GanttChartTask) {
   return task.kind === "project" && !!task.hasTasks;
 }
 
-export function GanttChart({ tasks, viewMode }: GanttChartProps) {
+export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<Gantt | null>(null);
   const scrollCleanupRef = useRef<(() => void) | null>(null);
   const tasksRef = useRef<GanttChartTask[]>(tasks);
+  // The chart instance is created once and its `on_click` callback is bound
+  // at that time, so read the latest handler through a ref instead of
+  // rebuilding the whole chart whenever the parent passes a new function.
+  const onBarClickRef = useRef(onBarClick);
+  useEffect(() => {
+    onBarClickRef.current = onBarClick;
+  }, [onBarClick]);
 
   // Project bars are a computed rollup of their child tasks, so they can't be
   // dragged/resized like a task bar. Block the drag before it starts (capture
@@ -186,6 +195,9 @@ export function GanttChart({ tasks, viewMode }: GanttChartProps) {
             return;
           }
           updateTaskProgress(t.id, progress);
+        },
+        on_click: (task) => {
+          onBarClickRef.current?.(task as GanttChartTask);
         },
         today_button: false,
         view_mode_select: false,
