@@ -4,15 +4,16 @@ import { useEffect, useRef } from "react";
 import "@/app/frappe-gantt.css";
 import type Gantt from "frappe-gantt";
 import type { GanttTask, GanttViewMode } from "frappe-gantt";
-import { fmtRange } from "@/lib/gantt-logic";
-import { ZOOM_LEVELS, type ViewMode } from "@/lib/types";
-import { updateTaskDates, updateTaskProgress, updateProjectDates } from "@/server/actions";
+import { fmtRange, TASK_STATUS_LABELS } from "@/lib/gantt-logic";
+import { ZOOM_LEVELS, type TaskStatus, type ViewMode } from "@/lib/types";
+import { updateTaskDates, updateProjectDates } from "@/server/actions";
 
 export interface GanttChartTask extends GanttTask {
   assignee?: string;
   description?: string;
   kind?: "project" | "task";
   hasTasks?: boolean;
+  taskStatus?: TaskStatus;
 }
 
 interface GanttChartProps {
@@ -202,6 +203,7 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
         container_height: "auto",
         infinite_padding: false,
         readonly: false,
+        readonly_progress: true,
         move_dependencies: false,
         on_date_change: (task, start, end) => {
           const t = task as GanttChartTask;
@@ -214,16 +216,6 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
             return;
           }
           updateTaskDates(t.id, toDateStr(start), toDateStr(end));
-        },
-        on_progress_change: (task, progress) => {
-          const t = task as GanttChartTask;
-          // Projects only store a status, not a numeric progress value -
-          // there's nothing to persist a progress-handle drag to.
-          if (t.kind === "project") {
-            ganttRef.current?.refresh(tasksRef.current);
-            return;
-          }
-          updateTaskProgress(t.id, progress);
         },
         on_click: (task) => {
           onBarClickRef.current?.(task as GanttChartTask);
@@ -238,7 +230,11 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
           const toIso = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v));
           ctx.set_title(t.name);
           ctx.set_subtitle((t.assignee ? `${t.assignee}  ·  ` : "") + fmtRange(toIso(ctx.task.start), toIso(ctx.task.end)));
-          ctx.set_details(`${t.progress}% complete`);
+          if (t.kind === "task" && t.taskStatus) {
+            ctx.set_details(TASK_STATUS_LABELS[t.taskStatus]);
+          } else if (t.kind === "project" && t.hasTasks) {
+            ctx.set_details(`${t.progress}% complete`);
+          }
         },
       });
       // Passing a custom `view_modes` array makes frappe-gantt default to

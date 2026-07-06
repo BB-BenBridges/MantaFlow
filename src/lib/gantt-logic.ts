@@ -1,10 +1,11 @@
-import type { OrderBy, ProjectDTO, SortBy } from "./types";
+import type { OrderBy, ProjectDTO, SortBy, TaskStatus } from "./types";
 
 export interface FilterState {
   hideCompleted: boolean;
   hideUnassigned: boolean;
   overdueOnly: boolean;
   owners: string[];
+  statuses: TaskStatus[];
 }
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -12,6 +13,30 @@ export const DEFAULT_FILTERS: FilterState = {
   hideUnassigned: false,
   overdueOnly: false,
   owners: [],
+  statuses: [],
+};
+
+// Fill width (as a frappe-gantt "progress" percentage) for each status's bar.
+// Only "todo" renders as empty - "in progress" and "complete" both fill the
+// whole bar and are told apart by color/class (see TASK_STATUS_CLASS) rather
+// than by a partial-width bar.
+export const TASK_STATUS_PROGRESS: Record<TaskStatus, number> = {
+  todo: 0,
+  inProgress: 100,
+  complete: 100,
+};
+
+// Custom-class suffix applied to a task's bar per status, styled in globals.css.
+export const TASK_STATUS_CLASS: Record<TaskStatus, string> = {
+  todo: "",
+  inProgress: "-inprogress",
+  complete: "-complete",
+};
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  todo: "To do",
+  inProgress: "In progress",
+  complete: "Complete",
 };
 
 export interface VisibleRow {
@@ -23,9 +48,11 @@ export interface VisibleRow {
   person: string | null;
   initials: string;
   status: "accent" | "good" | "warn" | "idle";
+  taskStatus: TaskStatus | null;
   start: string;
   end: string;
   progress: number;
+  complete: boolean;
   open: boolean;
   hasTasks: boolean;
 }
@@ -49,17 +76,19 @@ export function fmtRange(start: string, end: string) {
   return `${s} – ${e}`;
 }
 
-export function projectSpan(p: ProjectDTO): { start: string; end: string; progress: number } {
+// A project with no child tasks has nothing to roll up, so its completion is
+// assumed directly from its own status instead of being computed.
+export function projectSpan(p: ProjectDTO): { start: string; end: string; progress: number; complete: boolean } {
   if (p.tasks.length === 0) {
-    const progress = p.status === "good" ? 100 : p.status === "accent" ? 50 : 0;
-    return { start: p.startDate ?? "", end: p.endDate ?? "", progress };
+    return { start: p.startDate ?? "", end: p.endDate ?? "", progress: 0, complete: p.status === "good" };
   }
   const starts = p.tasks.map((t) => ms(t.start));
   const ends = p.tasks.map((t) => ms(t.end));
   const start = Math.min(...starts);
   const end = Math.max(...ends);
-  const progress = p.tasks.reduce((a, t) => a + t.progress, 0) / p.tasks.length;
-  return { start: toDateStr(start), end: toDateStr(end), progress: Math.round(progress) };
+  const completedCount = p.tasks.filter((t) => t.status === "complete").length;
+  const progress = Math.round((completedCount / p.tasks.length) * 100);
+  return { start: toDateStr(start), end: toDateStr(end), progress, complete: completedCount === p.tasks.length };
 }
 
 function compareBySort(sortBy: SortBy, a: { name: string; end: string; progress: number }, b: { name: string; end: string; progress: number }) {
@@ -73,18 +102,19 @@ function compareBySort(sortBy: SortBy, a: { name: string; end: string; progress:
   }
 }
 
-function isOverdue(end: string, progress: number) {
-  return progress < 100 && ms(end) < Date.now();
+function isOverdue(end: string, complete: boolean) {
+  return !complete && ms(end) < Date.now();
 }
 
 function passesFilters(
   filters: FilterState,
-  row: { person: string | null; end: string; progress: number }
+  row: { person: string | null; end: string; complete: boolean; taskStatus: TaskStatus | null }
 ) {
-  if (filters.hideCompleted && row.progress >= 100) return false;
+  if (filters.hideCompleted && row.complete) return false;
   if (filters.hideUnassigned && !row.person) return false;
-  if (filters.overdueOnly && !isOverdue(row.end, row.progress)) return false;
+  if (filters.overdueOnly && !isOverdue(row.end, row.complete)) return false;
   if (filters.owners.length > 0 && (!row.person || !filters.owners.includes(row.person))) return false;
+  if (filters.statuses.length > 0 && row.taskStatus && !filters.statuses.includes(row.taskStatus)) return false;
   return true;
 }
 
@@ -108,7 +138,7 @@ export function visibleRows(
   for (const p of sorted) {
     const span = spans.get(p.id)!;
     if (!span.start || !span.end) continue;
-    if (!passesFilters(filters, { person: p.person, end: span.end, progress: span.progress })) continue;
+    if (!passesFilters(filters, { person: p.person, end: span.end, complete: span.complete, taskStatus: null })) continue;
     out.push({
       kind: "project",
       id: p.id,
@@ -118,23 +148,27 @@ export function visibleRows(
       person: p.person,
       initials: p.initials,
       status: p.status,
+      taskStatus: null,
       start: span.start,
       end: span.end,
       progress: span.progress,
+      complete: span.complete,
       open: !!expanded[p.id],
       hasTasks: p.tasks.length > 0,
     });
     if (expanded[p.id] && p.tasks.length > 0) {
       const tasks = p.tasks.slice();
+      const withProgress = tasks.map((t) => ({ ...t, progress: TASK_STATUS_PROGRESS[t.status] }));
       if (byOwner) {
-        tasks.sort(
+        withProgress.sort(
           (a, b) => (a.person || "").localeCompare(b.person || "") || ms(a.start) - ms(b.start)
         );
       } else {
-        tasks.sort((a, b) => compareBySort(sortBy, a, b));
+        withProgress.sort((a, b) => compareBySort(sortBy, a, b));
       }
-      for (const t of tasks) {
-        if (!passesFilters(filters, { person: t.person, end: t.end, progress: t.progress })) continue;
+      for (const t of withProgress) {
+        const complete = t.status === "complete";
+        if (!passesFilters(filters, { person: t.person, end: t.end, complete, taskStatus: t.status })) continue;
         out.push({
           kind: "task",
           id: t.id,
@@ -144,9 +178,11 @@ export function visibleRows(
           person: t.person,
           initials: t.initials,
           status: "idle",
+          taskStatus: t.status,
           start: t.start,
           end: t.end,
           progress: t.progress,
+          complete,
           open: false,
           hasTasks: false,
         });

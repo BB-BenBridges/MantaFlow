@@ -20,15 +20,19 @@ import { NewProjectModal } from "./NewProjectModal";
 import { ImportJiraModal } from "./ImportJiraModal";
 import { EditItemModal } from "./EditItemModal";
 import type { BoardProps } from "./board-types";
-import type { SortBy } from "@/lib/types";
+import type { SortBy, TaskStatus } from "@/lib/types";
 import { ZOOM_LEVELS } from "@/lib/types";
-import { DEFAULT_FILTERS, type FilterState } from "@/lib/gantt-logic";
+import { DEFAULT_FILTERS, TASK_STATUS_CLASS, TASK_STATUS_LABELS, type FilterState } from "@/lib/gantt-logic";
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "dueDate", label: "Due date" },
   { value: "progress", label: "Progress" },
   { value: "name", label: "Name (A–Z)" },
 ];
+
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = (
+  ["todo", "inProgress", "complete"] as TaskStatus[]
+).map((value) => ({ value, label: TASK_STATUS_LABELS[value] }));
 
 type OpenMenu = "filters" | "sort" | "more" | null;
 
@@ -107,6 +111,13 @@ export function DesktopBoard({
     }));
   };
 
+  const toggleDraftStatus = (status: TaskStatus) => {
+    setDraftFilters((prev) => ({
+      ...prev,
+      statuses: prev.statuses.includes(status) ? prev.statuses.filter((s) => s !== status) : [...prev.statuses, status],
+    }));
+  };
+
   useEffect(() => {
     function onClick(e: MouseEvent) {
       const target = e.target as HTMLElement;
@@ -122,27 +133,32 @@ export function DesktopBoard({
     (filters.hideCompleted ? 1 : 0) +
     (filters.hideUnassigned ? 1 : 0) +
     (filters.overdueOnly ? 1 : 0) +
-    (filters.owners.length > 0 ? 1 : 0);
+    (filters.owners.length > 0 ? 1 : 0) +
+    (filters.statuses.length > 0 ? 1 : 0);
   const sortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Sort";
 
   const ganttTasks: GanttChartTask[] = rows.map((r) => {
-    const complete = r.progress >= 100;
     // A project with no child tasks has its own editable start/end, so it
     // gets a distinct class that stays draggable/resizable; a project with
     // tasks shows a computed rollup span and stays non-interactive.
     const isLeafProject = r.kind === "project" && !r.hasTasks;
+    // Only tasks and projects that have tasks carry a meaningful percentage
+    // complete - a childless project has nothing to roll up.
+    const hasProgress = r.kind === "task" || r.hasTasks;
     const base = r.kind === "project" ? (isLeafProject ? "g-parent-leaf" : "g-parent") : "g-child";
+    const suffix = r.kind === "task" && r.taskStatus ? TASK_STATUS_CLASS[r.taskStatus] : r.complete ? "-complete" : "";
     return {
       id: r.id,
       name: r.name,
       start: r.start,
       end: r.end,
-      progress: r.progress,
+      progress: hasProgress ? r.progress : 0,
       assignee: r.person || "",
       description: r.description || "",
-      custom_class: complete ? `${base}-complete` : base,
+      custom_class: `${base}${suffix}`,
       kind: r.kind,
       hasTasks: r.hasTasks,
+      taskStatus: r.taskStatus ?? undefined,
     };
   });
 
@@ -273,6 +289,14 @@ export function DesktopBoard({
                   <Checkbox checked={draftFilters.overdueOnly} />
                 </div>
 
+                <div className="popover-section-label">Task status</div>
+                {STATUS_OPTIONS.map((opt) => (
+                  <div key={opt.value} className="popover-row" onClick={() => toggleDraftStatus(opt.value)}>
+                    <span>{opt.label}</span>
+                    <Checkbox checked={draftFilters.statuses.includes(opt.value)} />
+                  </div>
+                ))}
+
                 {owners.length > 0 && (
                   <>
                     <div className="popover-section-label">Owner</div>
@@ -377,7 +401,7 @@ export function DesktopBoard({
             </div>
             {rows.map((r) => {
               const isProj = r.kind === "project";
-              const complete = r.progress >= 100;
+              const complete = r.complete;
               return (
                 <div
                   key={r.id}

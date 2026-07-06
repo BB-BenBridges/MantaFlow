@@ -351,6 +351,24 @@ a {
   fill: #3a3a40 !important;
 }
 
+/* in-progress tasks fill the whole bar (not a 50% partial fill) and are told
+   apart from "todo" and "complete" purely by color */
+.g-child-inprogress .bar {
+  fill: color-mix(in srgb, var(--accent) 20%, var(--ui-surface-3)) !important;
+  outline: 1px solid var(--accent) !important;
+}
+
+.g-child-inprogress .bar-progress {
+  fill: var(--accent) !important;
+  opacity: 0.85;
+}
+
+.g-child-inprogress .bar-label {
+  fill: #1b1b1f !important;
+  font-family: var(--font-hanken) !important;
+  font-weight: 500 !important;
+}
+
 /* completed projects/tasks - distinct from the in-progress accent colour */
 .g-parent-complete .bar {
   fill: var(--good) !important;

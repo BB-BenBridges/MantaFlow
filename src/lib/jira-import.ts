@@ -1,4 +1,4 @@
-import type { ProjectDTO } from "./types";
+import type { ProjectDTO, TaskStatus } from "./types";
 
 /** Parses RFC4180-ish CSV text (quoted fields, embedded commas/newlines, "" escapes). */
 export function parseCsv(input: string): string[][] {
@@ -144,7 +144,7 @@ export interface ImportedTask {
   person: string | null;
   start: Date;
   end: Date;
-  progress: number;
+  status: TaskStatus;
 }
 
 export interface ImportedProject {
@@ -171,11 +171,11 @@ function resolveDates(issue: JiraIssue): { start: Date; end: Date } {
   return { start, end };
 }
 
-function progressFor(issue: JiraIssue): number {
+function taskStatusFor(issue: JiraIssue): TaskStatus {
   const cat = issue.statusCategory.toLowerCase();
-  if (cat === "done") return 100;
-  if (cat === "indeterminate") return 50;
-  return 0;
+  if (cat === "done") return "complete";
+  if (cat === "indeterminate") return "inProgress";
+  return "todo";
 }
 
 function statusFor(issue: JiraIssue): ProjectDTO["status"] {
@@ -241,7 +241,7 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
       person: issue.assignee || null,
       start,
       end,
-      progress: progressFor(issue),
+      status: taskStatusFor(issue),
     });
   }
 

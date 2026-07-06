@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Modal, TextInput, Autocomplete, Button, Stack, Group, Text } from "@mantine/core";
+import { Modal, TextInput, Autocomplete, Button, Stack, Group, Text, SegmentedControl } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import { updateTask, updateProject } from "@/server/actions";
-import { capitalizeName } from "@/lib/gantt-logic";
+import { capitalizeName, TASK_STATUS_LABELS } from "@/lib/gantt-logic";
+import type { TaskStatus } from "@/lib/types";
 import type { GanttChartTask } from "./GanttChart";
 import { RichTextInput } from "./RichTextInput";
+
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = (
+  ["todo", "inProgress", "complete"] as TaskStatus[]
+).map((value) => ({ value, label: TASK_STATUS_LABELS[value] }));
 
 interface EditItemModalProps {
   item: GanttChartTask;
@@ -26,6 +31,7 @@ export function EditItemModal({ item, owners, onClose }: EditItemModalProps) {
   const [person, setPerson] = useState(item.assignee ?? "");
   const [start, setStart] = useState<string | null>(String(item.start));
   const [end, setEnd] = useState<string | null>(String(item.end));
+  const [status, setStatus] = useState<TaskStatus>(item.taskStatus ?? "todo");
   const [error, setError] = useState<string | null>(null);
 
   const isTask = item.kind === "task";
@@ -46,7 +52,7 @@ export function EditItemModal({ item, owners, onClose }: EditItemModalProps) {
     const responsiblePerson = capitalizeName(person.trim());
     startTransition(async () => {
       if (isTask) {
-        await updateTask(item.id, { name, description, person: responsiblePerson, start: start!, end: end! });
+        await updateTask(item.id, { name, description, person: responsiblePerson, start: start!, end: end!, status });
       } else {
         await updateProject(item.id, {
           name,
@@ -84,6 +90,14 @@ export function EditItemModal({ item, owners, onClose }: EditItemModalProps) {
           onChange={setPerson}
           onBlur={() => setPerson((p) => capitalizeName(p.trim()))}
         />
+        {isTask && (
+          <SegmentedControl
+            value={status}
+            onChange={(v) => setStatus(v as TaskStatus)}
+            data={STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            fullWidth
+          />
+        )}
         {datesEditable ? (
           <Group grow>
             <DateInput label="Start date" value={start} onChange={setStart} valueFormat="YYYY-MM-DD" />

@@ -96,11 +96,14 @@ export function MobileBoard({
         <div style={{ maxHeight: 480, overflowY: "auto" }} className="scrollhide">
           {rows.map((r) => {
             const isProj = r.kind === "project";
-            const complete = r.progress >= 100;
+            // Only tasks and projects that have tasks carry a meaningful percentage
+            // complete - a childless project has nothing to roll up.
+            const hasProgress = r.kind === "task" || r.hasTasks;
+            const complete = r.complete;
             const left = Math.max(0, pct(ms(r.start), win.start, win.end));
             const right = Math.min(100, pct(ms(r.end), win.start, win.end));
             const width = Math.max(1.5, right - left);
-            const prog = width * (r.progress / 100);
+            const prog = hasProgress ? width * (r.progress / 100) : 0;
             const mpad = isProj ? 0 : 22;
             return (
               <div

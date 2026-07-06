@@ -26,10 +26,13 @@ export function GanttApp({ projects }: GanttAppProps) {
     key: "gantt-view-mode",
     defaultValue: DEFAULT_VIEW_MODE,
   });
-  const [filters, setFilters] = useLocalStorage<FilterState>({
+  const [storedFilters, setFilters] = useLocalStorage<FilterState>({
     key: "gantt-filters",
     defaultValue: DEFAULT_FILTERS,
   });
+  // Merge in case a filter was persisted before a newer field (e.g. `statuses`)
+  // was added to FilterState, so older localStorage values don't crash.
+  const filters: FilterState = useMemo(() => ({ ...DEFAULT_FILTERS, ...storedFilters }), [storedFilters]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     if (projects[0]) initial[projects[0].id] = true;

@@ -29,7 +29,7 @@ export async function getProjects(): Promise<ProjectDTO[]> {
       initials: t.initials,
       start: toDateStr(t.start),
       end: toDateStr(t.end),
-      progress: t.progress,
+      status: t.status,
     })),
   }));
 }

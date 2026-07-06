@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { initialsOf } from "@/lib/initials";
 import { parseJiraCsvToProjects } from "@/lib/jira-import";
+import type { TaskStatus } from "@/lib/types";
 
 export interface CreateProjectInput {
   name: string;
@@ -60,6 +61,7 @@ export interface UpdateTaskInput {
   person?: string;
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
+  status: TaskStatus;
 }
 
 export async function updateTask(id: string, input: UpdateTaskInput) {
@@ -80,19 +82,8 @@ export async function updateTask(id: string, input: UpdateTaskInput) {
       initials: initialsOf(person || name),
       start: new Date(`${input.start}T00:00:00`),
       end: new Date(`${input.end}T00:00:00`),
+      status: input.status,
     },
-  });
-
-  revalidatePath("/");
-}
-
-export async function updateTaskProgress(id: string, progress: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
-  await prisma.task.update({
-    where: { id },
-    data: { progress: Math.max(0, Math.min(100, Math.round(progress))) },
   });
 
   revalidatePath("/");
@@ -186,7 +177,7 @@ export async function importJiraCsv(csvText: string): Promise<ImportJiraCsvResul
             initials: initialsOf(t.person || t.name),
             start: t.start,
             end: t.end,
-            progress: t.progress,
+            status: t.status,
             order: taskIndex,
           })),
         },

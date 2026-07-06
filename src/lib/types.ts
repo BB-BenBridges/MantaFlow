@@ -1,5 +1,6 @@
 export type OrderBy = "project" | "owner";
 export type SortBy = "dueDate" | "progress" | "name";
+export type TaskStatus = "todo" | "inProgress" | "complete";
 
 // The name of a zoom level - matches the id passed to the Gantt chart's
 // `change_view_mode`. Not the same as the display label (see ZOOM_LEVELS).
@@ -39,7 +40,7 @@ export interface TaskDTO {
   initials: string;
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
-  progress: number;
+  status: TaskStatus;
 }
 
 export interface ProjectDTO {
