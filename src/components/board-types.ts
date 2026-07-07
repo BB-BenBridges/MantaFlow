@@ -1,7 +1,10 @@
 import type { FilterState, VisibleRow } from "@/lib/gantt-logic";
-import type { OrderBy, ProjectDTO, SortBy, ViewMode } from "@/lib/types";
+import type { BoardDTO, OrderBy, ProjectDTO, SortBy, ViewMode } from "@/lib/types";
 
 export interface BoardProps {
+  boards: BoardDTO[];
+  currentBoardId: string;
+  onSwitchBoard: (boardId: string) => void;
   rows: VisibleRow[];
   orderBy: OrderBy;
   setOrderBy: (v: OrderBy) => void;

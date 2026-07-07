@@ -1,13 +1,22 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import type { ProjectDTO } from "@/lib/types";
+import type { BoardDTO, ProjectDTO } from "@/lib/types";
 
 function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-export async function getProjects(): Promise<ProjectDTO[]> {
+export async function getBoards(): Promise<BoardDTO[]> {
+  const boards = await prisma.board.findMany({
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+  });
+
+  return boards.map((b) => ({ id: b.id, name: b.name }));
+}
+
+export async function getProjects(boardId: string): Promise<ProjectDTO[]> {
   const projects = await prisma.project.findMany({
+    where: { boardId },
     orderBy: { order: "asc" },
     include: { tasks: { orderBy: { order: "asc" } } },
   });

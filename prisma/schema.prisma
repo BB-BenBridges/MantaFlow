@@ -25,6 +25,17 @@ enum TaskStatus {
   @@schema("gantt")
 }
 
+model Board {
+  id        String    @id @default(cuid())
+  name      String
+  order     Int       @default(0)
+  projects  Project[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@schema("gantt")
+}
+
 model Project {
   id          String        @id @default(cuid())
   name        String
@@ -35,6 +46,8 @@ model Project {
   startDate   DateTime?
   endDate     DateTime?
   order       Int           @default(0)
+  board       Board         @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId     String
   tasks       Task[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

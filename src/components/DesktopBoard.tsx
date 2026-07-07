@@ -19,6 +19,7 @@ import { GanttChart, type GanttChartTask } from "./GanttChart";
 import { NewProjectModal } from "./NewProjectModal";
 import { ImportJiraModal } from "./ImportJiraModal";
 import { EditItemModal } from "./EditItemModal";
+import { BoardSwitcher } from "./BoardSwitcher";
 import type { BoardProps } from "./board-types";
 import type { SortBy, TaskStatus } from "@/lib/types";
 import { ZOOM_LEVELS } from "@/lib/types";
@@ -50,6 +51,9 @@ function Checkbox({ checked }: { checked: boolean }) {
 }
 
 export function DesktopBoard({
+  boards,
+  currentBoardId,
+  onSwitchBoard,
   rows,
   orderBy,
   setOrderBy,
@@ -171,7 +175,7 @@ export function DesktopBoard({
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <LogoMark />
             <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: "-.01em" }}>MantaFlow</span>
-            <span style={{ fontSize: 12, color: "var(--ui-text-3)" }}>/ IT Delivery</span>
+            <BoardSwitcher boards={boards} currentBoardId={currentBoardId} onSwitchBoard={onSwitchBoard} />
           </div>
           <div style={{ flex: 1 }} />
           <div style={{ position: "relative" }}>
@@ -452,8 +456,8 @@ export function DesktopBoard({
           <GanttChart tasks={ganttTasks} viewMode={viewMode} onBarClick={setEditingItem} />
         </div>
       </div>
-      <NewProjectModal opened={modalOpen} owners={owners} onClose={() => setModalOpen(false)} />
-      <ImportJiraModal opened={importOpen} onClose={() => setImportOpen(false)} />
+      <NewProjectModal opened={modalOpen} boardId={currentBoardId} owners={owners} onClose={() => setModalOpen(false)} />
+      <ImportJiraModal opened={importOpen} boardId={currentBoardId} onClose={() => setImportOpen(false)} />
       {editingItem && (
         <EditItemModal key={editingItem.id} item={editingItem} owners={owners} onClose={() => setEditingItem(null)} />
       )}

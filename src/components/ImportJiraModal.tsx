@@ -7,10 +7,11 @@ import { importJiraCsv } from "@/server/actions";
 
 interface ImportJiraModalProps {
   opened: boolean;
+  boardId: string;
   onClose: () => void;
 }
 
-export function ImportJiraModal({ opened, onClose }: ImportJiraModalProps) {
+export function ImportJiraModal({ opened, boardId, onClose }: ImportJiraModalProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [csvText, setCsvText] = useState("");
@@ -37,7 +38,7 @@ export function ImportJiraModal({ opened, onClose }: ImportJiraModalProps) {
     setError(null);
     startTransition(async () => {
       try {
-        await importJiraCsv(csvText);
+        await importJiraCsv(boardId, csvText);
         reset();
         onClose();
         router.refresh();

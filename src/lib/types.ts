@@ -43,6 +43,11 @@ export interface TaskDTO {
   status: TaskStatus;
 }
 
+export interface BoardDTO {
+  id: string;
+  name: string;
+}
+
 export interface ProjectDTO {
   id: string;
   name: string;

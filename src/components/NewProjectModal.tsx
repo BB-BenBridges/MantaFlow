@@ -10,11 +10,12 @@ import { RichTextInput } from "./RichTextInput";
 
 interface NewProjectModalProps {
   opened: boolean;
+  boardId: string;
   owners: string[];
   onClose: () => void;
 }
 
-export function NewProjectModal({ opened, owners, onClose }: NewProjectModalProps) {
+export function NewProjectModal({ opened, boardId, owners, onClose }: NewProjectModalProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
@@ -44,7 +45,7 @@ export function NewProjectModal({ opened, owners, onClose }: NewProjectModalProp
     }
     setError(null);
     startTransition(async () => {
-      await createProject({ name, description, person: capitalizeName(person.trim()), start, end });
+      await createProject({ boardId, name, description, person: capitalizeName(person.trim()), start, end });
       reset();
       onClose();
       router.refresh();

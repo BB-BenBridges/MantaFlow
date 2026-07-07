@@ -8,6 +8,7 @@ import { parseJiraCsvToProjects } from "@/lib/jira-import";
 import type { TaskStatus } from "@/lib/types";
 
 export interface CreateProjectInput {
+  boardId: string;
   name: string;
   description?: string;
   person?: string;
@@ -22,7 +23,7 @@ export async function createProject(input: CreateProjectInput) {
   const name = input.name.trim();
   if (!name) throw new Error("Project name is required");
 
-  const count = await prisma.project.count();
+  const count = await prisma.project.count({ where: { boardId: input.boardId } });
 
   await prisma.project.create({
     data: {
@@ -32,12 +33,35 @@ export async function createProject(input: CreateProjectInput) {
       initials: initialsOf(input.person?.trim() || name),
       status: "idle",
       order: count,
+      boardId: input.boardId,
       startDate: new Date(`${input.start}T00:00:00`),
       endDate: new Date(`${input.end}T00:00:00`),
     },
   });
 
   revalidatePath("/");
+}
+
+export interface CreateBoardResult {
+  id: string;
+}
+
+export async function createBoard(name: string): Promise<CreateBoardResult> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Board name is required");
+
+  const count = await prisma.board.count();
+
+  const board = await prisma.board.create({
+    data: { name: trimmed, order: count },
+  });
+
+  revalidatePath("/");
+
+  return { id: board.id };
 }
 
 export async function updateTaskDates(id: string, start: string, end: string) {
@@ -147,7 +171,7 @@ export interface ImportJiraCsvResult {
   tasks: number;
 }
 
-export async function importJiraCsv(csvText: string): Promise<ImportJiraCsvResult> {
+export async function importJiraCsv(boardId: string, csvText: string): Promise<ImportJiraCsvResult> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
@@ -156,7 +180,7 @@ export async function importJiraCsv(csvText: string): Promise<ImportJiraCsvResul
   const projects = parseJiraCsvToProjects(csvText);
   if (projects.length === 0) throw new Error("No importable issues found in that CSV");
 
-  const startingOrder = await prisma.project.count();
+  const startingOrder = await prisma.project.count({ where: { boardId } });
 
   for (const [projectIndex, p] of projects.entries()) {
     await prisma.project.create({
@@ -167,6 +191,7 @@ export async function importJiraCsv(csvText: string): Promise<ImportJiraCsvResul
         initials: initialsOf(p.person || p.name),
         status: p.status,
         order: startingOrder + projectIndex,
+        boardId,
         startDate: p.startDate,
         endDate: p.endDate,
         tasks: {

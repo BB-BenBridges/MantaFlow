@@ -1,19 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
-import type { ProjectDTO, OrderBy, SortBy, ViewMode } from "@/lib/types";
+import type { BoardDTO, ProjectDTO, OrderBy, SortBy, ViewMode } from "@/lib/types";
 import { DEFAULT_VIEW_MODE } from "@/lib/types";
 import { visibleRows, windowFor, monthTicks, uniqueOwners, DEFAULT_FILTERS, type FilterState } from "@/lib/gantt-logic";
 import { DesktopBoard } from "./DesktopBoard";
 import { MobileBoard } from "./MobileBoard";
 
 interface GanttAppProps {
+  boards: BoardDTO[];
+  currentBoardId: string;
   projects: ProjectDTO[];
 }
 
-export function GanttApp({ projects }: GanttAppProps) {
+export function GanttApp({ boards, currentBoardId, projects }: GanttAppProps) {
   const isMobile = useMediaQuery("(max-width: 780px)");
+  const router = useRouter();
+  const onSwitchBoard = (boardId: string) => {
+    router.push(`/?board=${boardId}`);
+  };
   const [orderBy, setOrderBy] = useLocalStorage<OrderBy>({
     key: "gantt-order-by",
     defaultValue: "project",
@@ -53,6 +60,9 @@ export function GanttApp({ projects }: GanttAppProps) {
   const owners = useMemo(() => uniqueOwners(projects), [projects]);
 
   const props = {
+    boards,
+    currentBoardId,
+    onSwitchBoard,
     rows,
     orderBy,
     setOrderBy,

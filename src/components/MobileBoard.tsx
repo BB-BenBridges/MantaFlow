@@ -6,12 +6,16 @@ import { UserButton } from "@clerk/nextjs";
 import { LogoMark, ChevronIcon, SunMoonIcon, PlusIcon, MinusIcon, UploadIcon, CheckCircleIcon } from "./icons";
 import { NewProjectModal } from "./NewProjectModal";
 import { ImportJiraModal } from "./ImportJiraModal";
+import { BoardSwitcher } from "./BoardSwitcher";
 import { fmtRange, ms, pct } from "@/lib/gantt-logic";
 import type { BoardProps } from "./board-types";
 import { ZOOM_LEVELS } from "@/lib/types";
 import { ownerAvatarStyle } from "@/lib/owner-colors";
 
 export function MobileBoard({
+  boards,
+  currentBoardId,
+  onSwitchBoard,
   rows,
   orderBy,
   setOrderBy,
@@ -35,6 +39,7 @@ export function MobileBoard({
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 15px", borderBottom: "1px solid var(--ui-border)" }}>
           <LogoMark size={20} />
           <span style={{ fontWeight: 600, fontSize: 14 }}>MantaFlow</span>
+          <BoardSwitcher boards={boards} currentBoardId={currentBoardId} onSwitchBoard={onSwitchBoard} />
           <div style={{ flex: 1 }} />
           <button
             className="iconbtn"
@@ -187,8 +192,8 @@ export function MobileBoard({
           </button>
         </div>
       </div>
-      <NewProjectModal opened={modalOpen} owners={owners} onClose={() => setModalOpen(false)} />
-      <ImportJiraModal opened={importOpen} onClose={() => setImportOpen(false)} />
+      <NewProjectModal opened={modalOpen} boardId={currentBoardId} owners={owners} onClose={() => setModalOpen(false)} />
+      <ImportJiraModal opened={importOpen} boardId={currentBoardId} onClose={() => setImportOpen(false)} />
     </div>
   );
 }
