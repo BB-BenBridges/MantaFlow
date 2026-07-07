@@ -23,6 +23,7 @@ import type { BoardProps } from "./board-types";
 import type { SortBy, TaskStatus } from "@/lib/types";
 import { ZOOM_LEVELS } from "@/lib/types";
 import { DEFAULT_FILTERS, TASK_STATUS_CLASS, TASK_STATUS_LABELS, type FilterState } from "@/lib/gantt-logic";
+import { ownerAvatarStyle } from "@/lib/owner-colors";
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "dueDate", label: "Due date" },
@@ -410,7 +411,7 @@ export function DesktopBoard({
                   onClick={isProj && r.hasTasks ? () => toggle(r.id) : undefined}
                 >
                   <ChevronIcon className={r.open ? "open" : ""} style={{ visibility: isProj && r.hasTasks ? "visible" : "hidden" }} />
-                  <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18 }}>
+                  <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18, ...ownerAvatarStyle(r.person) }}>
                     {r.initials}
                   </div>
                   <span

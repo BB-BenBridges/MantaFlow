@@ -9,6 +9,7 @@ import { ImportJiraModal } from "./ImportJiraModal";
 import { fmtRange, ms, pct } from "@/lib/gantt-logic";
 import type { BoardProps } from "./board-types";
 import { ZOOM_LEVELS } from "@/lib/types";
+import { ownerAvatarStyle } from "@/lib/owner-colors";
 
 export function MobileBoard({
   rows,
@@ -114,7 +115,7 @@ export function MobileBoard({
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: mpad }}>
                   <ChevronIcon size={13} className={r.open ? "open" : ""} style={{ visibility: isProj && r.hasTasks ? "visible" : "hidden" }} />
-                  <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18 }}>
+                  <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18, ...ownerAvatarStyle(r.person) }}>
                     {r.initials}
                   </div>
                   <span
