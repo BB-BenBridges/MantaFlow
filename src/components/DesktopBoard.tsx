@@ -16,14 +16,14 @@ import {
   MoreIcon,
 } from "./icons";
 import { GanttChart, type GanttChartTask } from "./GanttChart";
-import { NewProjectModal } from "./NewProjectModal";
+import { NewTaskModal } from "./NewTaskModal";
 import { ImportJiraModal } from "./ImportJiraModal";
 import { EditItemModal } from "./EditItemModal";
 import { BoardSwitcher } from "./BoardSwitcher";
 import type { BoardProps } from "./board-types";
-import type { SortBy, TaskStatus } from "@/lib/types";
+import type { SortBy, SubtaskStatus } from "@/lib/types";
 import { ZOOM_LEVELS } from "@/lib/types";
-import { DEFAULT_FILTERS, TASK_STATUS_CLASS, TASK_STATUS_LABELS, type FilterState } from "@/lib/gantt-logic";
+import { DEFAULT_FILTERS, SUBTASK_STATUS_CLASS, SUBTASK_STATUS_LABELS, type FilterState } from "@/lib/gantt-logic";
 import { ownerAvatarStyle } from "@/lib/owner-colors";
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -32,9 +32,9 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: "name", label: "Name (A–Z)" },
 ];
 
-const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = (
-  ["todo", "inProgress", "complete"] as TaskStatus[]
-).map((value) => ({ value, label: TASK_STATUS_LABELS[value] }));
+const STATUS_OPTIONS: { value: SubtaskStatus; label: string }[] = (
+  ["todo", "inProgress", "complete"] as SubtaskStatus[]
+).map((value) => ({ value, label: SUBTASK_STATUS_LABELS[value] }));
 
 type OpenMenu = "filters" | "sort" | "more" | null;
 
@@ -116,7 +116,7 @@ export function DesktopBoard({
     }));
   };
 
-  const toggleDraftStatus = (status: TaskStatus) => {
+  const toggleDraftStatus = (status: SubtaskStatus) => {
     setDraftFilters((prev) => ({
       ...prev,
       statuses: prev.statuses.includes(status) ? prev.statuses.filter((s) => s !== status) : [...prev.statuses, status],
@@ -143,15 +143,15 @@ export function DesktopBoard({
   const sortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Sort";
 
   const ganttTasks: GanttChartTask[] = rows.map((r) => {
-    // A project with no child tasks has its own editable start/end, so it
-    // gets a distinct class that stays draggable/resizable; a project with
-    // tasks shows a computed rollup span and stays non-interactive.
-    const isLeafProject = r.kind === "project" && !r.hasTasks;
-    // Only tasks and projects that have tasks carry a meaningful percentage
-    // complete - a childless project has nothing to roll up.
-    const hasProgress = r.kind === "task" || r.hasTasks;
-    const base = r.kind === "project" ? (isLeafProject ? "g-parent-leaf" : "g-parent") : "g-child";
-    const suffix = r.kind === "task" && r.taskStatus ? TASK_STATUS_CLASS[r.taskStatus] : r.complete ? "-complete" : "";
+    // A task with no child subtasks has its own editable start/end, so it
+    // gets a distinct class that stays draggable/resizable; a task with
+    // subtasks shows a computed rollup span and stays non-interactive.
+    const isLeafTask = r.kind === "task" && !r.hasSubtasks;
+    // Only subtasks and tasks that have subtasks carry a meaningful percentage
+    // complete - a childless task has nothing to roll up.
+    const hasProgress = r.kind === "subtask" || r.hasSubtasks;
+    const base = r.kind === "task" ? (isLeafTask ? "g-parent-leaf" : "g-parent") : "g-child";
+    const suffix = r.kind === "subtask" && r.subtaskStatus ? SUBTASK_STATUS_CLASS[r.subtaskStatus] : r.complete ? "-complete" : "";
     return {
       id: r.id,
       name: r.name,
@@ -162,8 +162,8 @@ export function DesktopBoard({
       description: r.description || "",
       custom_class: `${base}${suffix}`,
       kind: r.kind,
-      hasTasks: r.hasTasks,
-      taskStatus: r.taskStatus ?? undefined,
+      hasSubtasks: r.hasSubtasks,
+      subtaskStatus: r.subtaskStatus ?? undefined,
     };
   });
 
@@ -222,8 +222,8 @@ export function DesktopBoard({
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--ui-border)", flex: "none", flexWrap: "wrap", rowGap: 8 }}>
           <span className="toolbar-group-label">Group</span>
           <div className="seg">
-            <button className={orderBy === "project" ? "on" : ""} onClick={() => setOrderBy("project")}>
-              Project
+            <button className={orderBy === "task" ? "on" : ""} onClick={() => setOrderBy("task")}>
+              Task
             </button>
             <button className={orderBy === "owner" ? "on" : ""} onClick={() => setOrderBy("owner")}>
               Owner
@@ -294,7 +294,7 @@ export function DesktopBoard({
                   <Checkbox checked={draftFilters.overdueOnly} />
                 </div>
 
-                <div className="popover-section-label">Task status</div>
+                <div className="popover-section-label">Subtask status</div>
                 {STATUS_OPTIONS.map((opt) => (
                   <div key={opt.value} className="popover-row" onClick={() => toggleDraftStatus(opt.value)}>
                     <span>{opt.label}</span>
@@ -380,7 +380,7 @@ export function DesktopBoard({
             onClick={() => setModalOpen(true)}
           >
             <PlusIcon />
-            New project
+            New task
           </button>
         </div>
 
@@ -401,28 +401,28 @@ export function DesktopBoard({
               }}
             >
               <span style={{ font: "600 11px var(--font-jetbrains), monospace", letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ui-text-3)" }}>
-                Project · Owner
+                Task · Owner
               </span>
             </div>
             {rows.map((r) => {
-              const isProj = r.kind === "project";
+              const isTask = r.kind === "task";
               const complete = r.complete;
               return (
                 <div
                   key={r.id}
                   className="lrow"
-                  style={{ height: 44, paddingLeft: isProj ? 14 : 40, paddingRight: 14 }}
-                  onClick={isProj && r.hasTasks ? () => toggle(r.id) : undefined}
+                  style={{ height: 44, paddingLeft: isTask ? 14 : 40, paddingRight: 14 }}
+                  onClick={isTask && r.hasSubtasks ? () => toggle(r.id) : undefined}
                 >
-                  <ChevronIcon className={r.open ? "open" : ""} style={{ visibility: isProj && r.hasTasks ? "visible" : "hidden" }} />
-                  <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18, ...ownerAvatarStyle(r.person) }}>
+                  <ChevronIcon className={r.open ? "open" : ""} style={{ visibility: isTask && r.hasSubtasks ? "visible" : "hidden" }} />
+                  <div className="av" style={{ width: isTask ? 22 : 18, height: isTask ? 22 : 18, ...ownerAvatarStyle(r.person) }}>
                     {r.initials}
                   </div>
                   <span
                     style={{
                       fontSize: 13,
-                      fontWeight: isProj ? 600 : 500,
-                      color: isProj ? "var(--ui-text)" : complete ? "var(--ui-text-3)" : "var(--ui-text-2)",
+                      fontWeight: isTask ? 600 : 500,
+                      color: isTask ? "var(--ui-text)" : complete ? "var(--ui-text-3)" : "var(--ui-text-2)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -456,7 +456,7 @@ export function DesktopBoard({
           <GanttChart tasks={ganttTasks} viewMode={viewMode} onBarClick={setEditingItem} />
         </div>
       </div>
-      <NewProjectModal opened={modalOpen} boardId={currentBoardId} owners={owners} onClose={() => setModalOpen(false)} />
+      <NewTaskModal opened={modalOpen} boardId={currentBoardId} owners={owners} onClose={() => setModalOpen(false)} />
       <ImportJiraModal opened={importOpen} boardId={currentBoardId} onClose={() => setImportOpen(false)} />
       {editingItem && (
         <EditItemModal key={editingItem.id} item={editingItem} owners={owners} onClose={() => setEditingItem(null)} />

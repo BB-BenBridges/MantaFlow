@@ -27,7 +27,7 @@ export function RichTextInput({ label, placeholder, value, onChange }: RichTextI
     },
   });
 
-  // The description modals stay mounted across submissions (e.g. NewProjectModal
+  // The description modals stay mounted across submissions (e.g. NewTaskModal
   // resets its fields without unmounting), so the editor's own content needs to
   // be resynced whenever the parent resets `value` out from under it.
   useEffect(() => {

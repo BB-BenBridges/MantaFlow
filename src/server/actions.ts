@@ -4,10 +4,10 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { initialsOf } from "@/lib/initials";
-import { parseJiraCsvToProjects } from "@/lib/jira-import";
-import type { TaskStatus } from "@/lib/types";
+import { parseJiraCsvToTasks } from "@/lib/jira-import";
+import type { SubtaskStatus } from "@/lib/types";
 
-export interface CreateProjectInput {
+export interface CreateTaskInput {
   boardId: string;
   name: string;
   description?: string;
@@ -16,16 +16,16 @@ export interface CreateProjectInput {
   end: string; // YYYY-MM-DD
 }
 
-export async function createProject(input: CreateProjectInput) {
+export async function createTask(input: CreateTaskInput) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const name = input.name.trim();
-  if (!name) throw new Error("Project name is required");
+  if (!name) throw new Error("Task name is required");
 
-  const count = await prisma.project.count({ where: { boardId: input.boardId } });
+  const count = await prisma.task.count({ where: { boardId: input.boardId } });
 
-  await prisma.project.create({
+  await prisma.task.create({
     data: {
       name,
       description: input.description?.trim() || null,
@@ -64,11 +64,11 @@ export async function createBoard(name: string): Promise<CreateBoardResult> {
   return { id: board.id };
 }
 
-export async function updateTaskDates(id: string, start: string, end: string) {
+export async function updateSubtaskDates(id: string, start: string, end: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  await prisma.task.update({
+  await prisma.subtask.update({
     where: { id },
     data: {
       start: new Date(`${start}T00:00:00`),
@@ -79,13 +79,48 @@ export async function updateTaskDates(id: string, start: string, end: string) {
   revalidatePath("/");
 }
 
-export interface UpdateTaskInput {
+export interface UpdateSubtaskInput {
   name: string;
   description?: string;
   person?: string;
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
-  status: TaskStatus;
+  status: SubtaskStatus;
+}
+
+export async function updateSubtask(id: string, input: UpdateSubtaskInput) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const name = input.name.trim();
+  if (!name) throw new Error("Subtask name is required");
+
+  const person = input.person?.trim() || null;
+
+  await prisma.subtask.update({
+    where: { id },
+    data: {
+      name,
+      description: input.description?.trim() || null,
+      person,
+      initials: initialsOf(person || name),
+      start: new Date(`${input.start}T00:00:00`),
+      end: new Date(`${input.end}T00:00:00`),
+      status: input.status,
+    },
+  });
+
+  revalidatePath("/");
+}
+
+export interface UpdateTaskInput {
+  name: string;
+  description?: string;
+  person?: string;
+  // Omitted for a task with child subtasks, since its span is a rollup
+  // computed from those subtasks rather than a value stored on the task.
+  start?: string;
+  end?: string;
 }
 
 export async function updateTask(id: string, input: UpdateTaskInput) {
@@ -104,41 +139,6 @@ export async function updateTask(id: string, input: UpdateTaskInput) {
       description: input.description?.trim() || null,
       person,
       initials: initialsOf(person || name),
-      start: new Date(`${input.start}T00:00:00`),
-      end: new Date(`${input.end}T00:00:00`),
-      status: input.status,
-    },
-  });
-
-  revalidatePath("/");
-}
-
-export interface UpdateProjectInput {
-  name: string;
-  description?: string;
-  person?: string;
-  // Omitted for a project with child tasks, since its span is a rollup
-  // computed from those tasks rather than a value stored on the project.
-  start?: string;
-  end?: string;
-}
-
-export async function updateProject(id: string, input: UpdateProjectInput) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
-
-  const name = input.name.trim();
-  if (!name) throw new Error("Project name is required");
-
-  const person = input.person?.trim() || null;
-
-  await prisma.project.update({
-    where: { id },
-    data: {
-      name,
-      description: input.description?.trim() || null,
-      person,
-      initials: initialsOf(person || name),
       ...(input.start && input.end
         ? {
             startDate: new Date(`${input.start}T00:00:00`),
@@ -151,11 +151,11 @@ export async function updateProject(id: string, input: UpdateProjectInput) {
   revalidatePath("/");
 }
 
-export async function updateProjectDates(id: string, start: string, end: string) {
+export async function updateTaskDates(id: string, start: string, end: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  await prisma.project.update({
+  await prisma.task.update({
     where: { id },
     data: {
       startDate: new Date(`${start}T00:00:00`),
@@ -167,8 +167,8 @@ export async function updateProjectDates(id: string, start: string, end: string)
 }
 
 export interface ImportJiraCsvResult {
-  projects: number;
   tasks: number;
+  subtasks: number;
 }
 
 export async function importJiraCsv(boardId: string, csvText: string): Promise<ImportJiraCsvResult> {
@@ -177,33 +177,33 @@ export async function importJiraCsv(boardId: string, csvText: string): Promise<I
 
   if (!csvText.trim()) throw new Error("No CSV data provided");
 
-  const projects = parseJiraCsvToProjects(csvText);
-  if (projects.length === 0) throw new Error("No importable issues found in that CSV");
+  const tasks = parseJiraCsvToTasks(csvText);
+  if (tasks.length === 0) throw new Error("No importable issues found in that CSV");
 
-  const startingOrder = await prisma.project.count({ where: { boardId } });
+  const startingOrder = await prisma.task.count({ where: { boardId } });
 
-  for (const [projectIndex, p] of projects.entries()) {
-    await prisma.project.create({
+  for (const [taskIndex, t] of tasks.entries()) {
+    await prisma.task.create({
       data: {
-        name: p.name,
-        description: p.description,
-        person: p.person,
-        initials: initialsOf(p.person || p.name),
-        status: p.status,
-        order: startingOrder + projectIndex,
+        name: t.name,
+        description: t.description,
+        person: t.person,
+        initials: initialsOf(t.person || t.name),
+        status: t.status,
+        order: startingOrder + taskIndex,
         boardId,
-        startDate: p.startDate,
-        endDate: p.endDate,
-        tasks: {
-          create: p.tasks.map((t, taskIndex) => ({
-            name: t.name,
-            description: t.description,
-            person: t.person,
-            initials: initialsOf(t.person || t.name),
-            start: t.start,
-            end: t.end,
-            status: t.status,
-            order: taskIndex,
+        startDate: t.startDate,
+        endDate: t.endDate,
+        subtasks: {
+          create: t.subtasks.map((s, subtaskIndex) => ({
+            name: s.name,
+            description: s.description,
+            person: s.person,
+            initials: initialsOf(s.person || s.name),
+            start: s.start,
+            end: s.end,
+            status: s.status,
+            order: subtaskIndex,
           })),
         },
       },
@@ -213,7 +213,7 @@ export async function importJiraCsv(boardId: string, csvText: string): Promise<I
   revalidatePath("/");
 
   return {
-    projects: projects.length,
-    tasks: projects.reduce((sum, p) => sum + p.tasks.length, 0),
+    tasks: tasks.length,
+    subtasks: tasks.reduce((sum, t) => sum + t.subtasks.length, 0),
   };
 }

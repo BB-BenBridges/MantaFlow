@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
-import type { BoardDTO, ProjectDTO, OrderBy, SortBy, ViewMode } from "@/lib/types";
+import type { BoardDTO, TaskDTO, OrderBy, SortBy, ViewMode } from "@/lib/types";
 import { DEFAULT_VIEW_MODE } from "@/lib/types";
 import { visibleRows, windowFor, monthTicks, uniqueOwners, DEFAULT_FILTERS, type FilterState } from "@/lib/gantt-logic";
 import { DesktopBoard } from "./DesktopBoard";
@@ -12,10 +12,10 @@ import { MobileBoard } from "./MobileBoard";
 interface GanttAppProps {
   boards: BoardDTO[];
   currentBoardId: string;
-  projects: ProjectDTO[];
+  tasks: TaskDTO[];
 }
 
-export function GanttApp({ boards, currentBoardId, projects }: GanttAppProps) {
+export function GanttApp({ boards, currentBoardId, tasks }: GanttAppProps) {
   const isMobile = useMediaQuery("(max-width: 780px)");
   const router = useRouter();
   const onSwitchBoard = (boardId: string) => {
@@ -23,7 +23,7 @@ export function GanttApp({ boards, currentBoardId, projects }: GanttAppProps) {
   };
   const [orderBy, setOrderBy] = useLocalStorage<OrderBy>({
     key: "gantt-order-by",
-    defaultValue: "project",
+    defaultValue: "task",
   });
   const [sortBy, setSortBy] = useLocalStorage<SortBy>({
     key: "gantt-sort-by",
@@ -42,8 +42,8 @@ export function GanttApp({ boards, currentBoardId, projects }: GanttAppProps) {
   const filters: FilterState = useMemo(() => ({ ...DEFAULT_FILTERS, ...storedFilters }), [storedFilters]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    if (projects[0]) initial[projects[0].id] = true;
-    if (projects[2]) initial[projects[2].id] = true;
+    if (tasks[0]) initial[tasks[0].id] = true;
+    if (tasks[2]) initial[tasks[2].id] = true;
     return initial;
   });
 
@@ -52,12 +52,12 @@ export function GanttApp({ boards, currentBoardId, projects }: GanttAppProps) {
   };
 
   const rows = useMemo(
-    () => visibleRows(projects, orderBy, expanded, filters, sortBy),
-    [projects, orderBy, expanded, filters, sortBy]
+    () => visibleRows(tasks, orderBy, expanded, filters, sortBy),
+    [tasks, orderBy, expanded, filters, sortBy]
   );
-  const win = useMemo(() => windowFor(projects), [projects]);
+  const win = useMemo(() => windowFor(tasks), [tasks]);
   const months = useMemo(() => monthTicks(win.start, win.end), [win]);
-  const owners = useMemo(() => uniqueOwners(projects), [projects]);
+  const owners = useMemo(() => uniqueOwners(tasks), [tasks]);
 
   const props = {
     boards,
@@ -73,7 +73,7 @@ export function GanttApp({ boards, currentBoardId, projects }: GanttAppProps) {
     toggle,
     win,
     months,
-    projects,
+    tasks,
     filters,
     setFilters,
     owners,

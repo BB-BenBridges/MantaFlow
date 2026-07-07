@@ -1,6 +1,6 @@
-export type OrderBy = "project" | "owner";
+export type OrderBy = "task" | "owner";
 export type SortBy = "dueDate" | "progress" | "name";
-export type TaskStatus = "todo" | "inProgress" | "complete";
+export type SubtaskStatus = "todo" | "inProgress" | "complete";
 
 // The name of a zoom level - matches the id passed to the Gantt chart's
 // `change_view_mode`. Not the same as the display label (see ZOOM_LEVELS).
@@ -32,7 +32,7 @@ export const DEFAULT_VIEW_MODE: ViewMode = "week-md";
 
 export type Theme = "light" | "dark";
 
-export interface TaskDTO {
+export interface SubtaskDTO {
   id: string;
   name: string;
   description: string | null;
@@ -40,7 +40,7 @@ export interface TaskDTO {
   initials: string;
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
-  status: TaskStatus;
+  status: SubtaskStatus;
 }
 
 export interface BoardDTO {
@@ -48,14 +48,14 @@ export interface BoardDTO {
   name: string;
 }
 
-export interface ProjectDTO {
+export interface TaskDTO {
   id: string;
   name: string;
   description: string | null;
   person: string | null;
   initials: string;
   status: "accent" | "good" | "warn" | "idle";
-  startDate: string | null; // YYYY-MM-DD, used when the project has no tasks
-  endDate: string | null; // YYYY-MM-DD, used when the project has no tasks
-  tasks: TaskDTO[];
+  startDate: string | null; // YYYY-MM-DD, used when the task has no subtasks
+  endDate: string | null; // YYYY-MM-DD, used when the task has no subtasks
+  subtasks: SubtaskDTO[];
 }

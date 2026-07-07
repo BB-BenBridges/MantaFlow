@@ -61,7 +61,7 @@ export function ImportJiraModal({ opened, boardId, onClose }: ImportJiraModalPro
       <Stack gap="sm">
         <Text size="sm" c="dimmed">
           Export issues from Jira as CSV, then upload or paste the contents below. Top-level issues become
-          projects; their sub-tasks (and the issue itself) become tasks on the timeline.
+          tasks; their sub-tasks (and the issue itself) become subtasks on the timeline.
         </Text>
         <FileButton onChange={handleFile} accept=".csv,text/csv">
           {(props) => (

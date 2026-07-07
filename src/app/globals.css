@@ -293,11 +293,49 @@ a {
   border-bottom: 1px solid var(--ui-border) !important;
 }
 
+/*
+ * "Back to today" button frappe-gantt shows once the user scrolls the
+ * timeline away from the current date. It ships styled with its own
+ * (light-mode-only) CSS variables, which read as a near-invisible pale
+ * icon against this app's surfaces - restyle it with our own tokens so
+ * it's clearly a clickable control in both themes.
+ */
+.gantt-wrap .extras .adjust {
+  background-color: var(--accent) !important;
+  color: var(--accent-on) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  padding: 9px 10px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+.gantt-wrap .extras .adjust:hover {
+  background-color: var(--accent-press) !important;
+  transform: translateY(-1px);
+}
+
 .g-parent .bar {
   fill: var(--accent) !important;
   stroke: none !important;
   outline: none !important;
   cursor: not-allowed !important;
+}
+
+/* Invisible placeholder row used to give an empty board a full-sized grid -
+   see emptyBoardFillerTask in GanttChart.tsx. */
+.g-empty-filler {
+  pointer-events: none !important;
+}
+
+.g-empty-filler .bar,
+.g-empty-filler .bar-progress,
+.g-empty-filler .bar-label,
+.g-empty-filler .handle {
+  display: none !important;
 }
 
 .g-parent .handle {
@@ -317,8 +355,8 @@ a {
   font-weight: 600 !important;
 }
 
-/* a project with no child tasks has its own editable start/end - drag and
-   resize like a task bar, just without a progress handle (projects only
+/* a task with no child subtasks has its own editable start/end - drag and
+   resize like a subtask bar, just without a progress handle (tasks only
    store a status, not a numeric progress value) */
 .g-parent-leaf .bar {
   fill: var(--accent) !important;
@@ -351,7 +389,7 @@ a {
   fill: #3a3a40 !important;
 }
 
-/* in-progress tasks fill the whole bar (not a 50% partial fill) and are told
+/* in-progress subtasks fill the whole bar (not a 50% partial fill) and are told
    apart from "todo" and "complete" purely by color */
 .g-child-inprogress .bar {
   fill: color-mix(in srgb, var(--accent) 20%, var(--ui-surface-3)) !important;
@@ -369,7 +407,7 @@ a {
   font-weight: 500 !important;
 }
 
-/* completed projects/tasks - distinct from the in-progress accent colour */
+/* completed tasks/subtasks - distinct from the in-progress accent colour */
 .g-parent-complete .bar {
   fill: var(--good) !important;
   stroke: none !important;

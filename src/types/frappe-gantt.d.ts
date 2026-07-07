@@ -68,5 +68,10 @@ declare module "frappe-gantt" {
     // used to translate between scroll position and date for zoom centering.
     gantt_start: Date;
     config: { column_width: number; step: number; unit: string };
+    // Undocumented internal - the options object passed to the constructor,
+    // read directly by `render()` on every `refresh()`/`change_view_mode()`
+    // call, so mutating a field here (e.g. `container_height`) before
+    // calling `refresh` takes effect on the next render.
+    options: GanttOptions;
   }
 }

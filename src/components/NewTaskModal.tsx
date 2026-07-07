@@ -4,18 +4,18 @@ import { useState, useTransition } from "react";
 import { Modal, TextInput, Autocomplete, Button, Stack, Group } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
-import { createProject } from "@/server/actions";
+import { createTask } from "@/server/actions";
 import { capitalizeName } from "@/lib/gantt-logic";
 import { RichTextInput } from "./RichTextInput";
 
-interface NewProjectModalProps {
+interface NewTaskModalProps {
   opened: boolean;
   boardId: string;
   owners: string[];
   onClose: () => void;
 }
 
-export function NewProjectModal({ opened, boardId, owners, onClose }: NewProjectModalProps) {
+export function NewTaskModal({ opened, boardId, owners, onClose }: NewTaskModalProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
@@ -36,7 +36,7 @@ export function NewProjectModal({ opened, boardId, owners, onClose }: NewProject
 
   function handleSubmit() {
     if (!name.trim()) {
-      setError("Project name is required");
+      setError("Task name is required");
       return;
     }
     if (!start || !end) {
@@ -45,7 +45,7 @@ export function NewProjectModal({ opened, boardId, owners, onClose }: NewProject
     }
     setError(null);
     startTransition(async () => {
-      await createProject({ boardId, name, description, person: capitalizeName(person.trim()), start, end });
+      await createTask({ boardId, name, description, person: capitalizeName(person.trim()), start, end });
       reset();
       onClose();
       router.refresh();
@@ -59,7 +59,7 @@ export function NewProjectModal({ opened, boardId, owners, onClose }: NewProject
         reset();
         onClose();
       }}
-      title="New project"
+      title="New task"
       size="lg"
     >
       <Stack gap="sm">
@@ -73,7 +73,7 @@ export function NewProjectModal({ opened, boardId, owners, onClose }: NewProject
         />
         <RichTextInput
           label="Description"
-          placeholder="Optional summary of the project"
+          placeholder="Optional summary of the task"
           value={description}
           onChange={setDescription}
         />
@@ -94,7 +94,7 @@ export function NewProjectModal({ opened, boardId, owners, onClose }: NewProject
             Cancel
           </Button>
           <Button onClick={handleSubmit} loading={pending}>
-            Create project
+            Create task
           </Button>
         </Group>
       </Stack>

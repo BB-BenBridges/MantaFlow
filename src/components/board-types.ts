@@ -1,5 +1,5 @@
 import type { FilterState, VisibleRow } from "@/lib/gantt-logic";
-import type { BoardDTO, OrderBy, ProjectDTO, SortBy, ViewMode } from "@/lib/types";
+import type { BoardDTO, OrderBy, TaskDTO, SortBy, ViewMode } from "@/lib/types";
 
 export interface BoardProps {
   boards: BoardDTO[];
@@ -15,7 +15,7 @@ export interface BoardProps {
   toggle: (id: string) => void;
   win: { start: number; end: number };
   months: { label: string; left: string }[];
-  projects: ProjectDTO[];
+  tasks: TaskDTO[];
   filters: FilterState;
   setFilters: (v: FilterState) => void;
   owners: string[];

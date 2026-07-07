@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMantineColorScheme } from "@mantine/core";
 import { UserButton } from "@clerk/nextjs";
 import { LogoMark, ChevronIcon, SunMoonIcon, PlusIcon, MinusIcon, UploadIcon, CheckCircleIcon } from "./icons";
-import { NewProjectModal } from "./NewProjectModal";
+import { NewTaskModal } from "./NewTaskModal";
 import { ImportJiraModal } from "./ImportJiraModal";
 import { BoardSwitcher } from "./BoardSwitcher";
 import { fmtRange, ms, pct } from "@/lib/gantt-logic";
@@ -80,8 +80,8 @@ export function MobileBoard({
             </button>
           </div>
           <div className="seg" style={{ flex: "none" }}>
-            <button className={orderBy === "project" ? "on" : ""} onClick={() => setOrderBy("project")}>
-              Project
+            <button className={orderBy === "task" ? "on" : ""} onClick={() => setOrderBy("task")}>
+              Task
             </button>
             <button className={orderBy === "owner" ? "on" : ""} onClick={() => setOrderBy("owner")}>
               Owner
@@ -101,33 +101,33 @@ export function MobileBoard({
 
         <div style={{ maxHeight: 480, overflowY: "auto" }} className="scrollhide">
           {rows.map((r) => {
-            const isProj = r.kind === "project";
-            // Only tasks and projects that have tasks carry a meaningful percentage
-            // complete - a childless project has nothing to roll up.
-            const hasProgress = r.kind === "task" || r.hasTasks;
+            const isTask = r.kind === "task";
+            // Only subtasks and tasks that have subtasks carry a meaningful percentage
+            // complete - a childless task has nothing to roll up.
+            const hasProgress = r.kind === "subtask" || r.hasSubtasks;
             const complete = r.complete;
             const left = Math.max(0, pct(ms(r.start), win.start, win.end));
             const right = Math.min(100, pct(ms(r.end), win.start, win.end));
             const width = Math.max(1.5, right - left);
             const prog = hasProgress ? width * (r.progress / 100) : 0;
-            const mpad = isProj ? 0 : 22;
+            const mpad = isTask ? 0 : 22;
             return (
               <div
                 key={r.id}
                 className="lrow"
                 style={{ minHeight: 46, padding: "0 14px", flexDirection: "column", alignItems: "stretch", gap: 5, justifyContent: "center" }}
-                onClick={isProj && r.hasTasks ? () => toggle(r.id) : undefined}
+                onClick={isTask && r.hasSubtasks ? () => toggle(r.id) : undefined}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: mpad }}>
-                  <ChevronIcon size={13} className={r.open ? "open" : ""} style={{ visibility: isProj && r.hasTasks ? "visible" : "hidden" }} />
-                  <div className="av" style={{ width: isProj ? 22 : 18, height: isProj ? 22 : 18, ...ownerAvatarStyle(r.person) }}>
+                  <ChevronIcon size={13} className={r.open ? "open" : ""} style={{ visibility: isTask && r.hasSubtasks ? "visible" : "hidden" }} />
+                  <div className="av" style={{ width: isTask ? 22 : 18, height: isTask ? 22 : 18, ...ownerAvatarStyle(r.person) }}>
                     {r.initials}
                   </div>
                   <span
                     style={{
                       fontSize: 13,
-                      fontWeight: isProj ? 600 : 500,
-                      color: isProj ? "var(--ui-text)" : complete ? "var(--ui-text-3)" : "var(--ui-text-2)",
+                      fontWeight: isTask ? 600 : 500,
+                      color: isTask ? "var(--ui-text)" : complete ? "var(--ui-text-3)" : "var(--ui-text-2)",
                       flex: 1,
                       whiteSpace: "nowrap",
                       overflow: "hidden",
@@ -151,7 +151,7 @@ export function MobileBoard({
                     style={{
                       left: `${left.toFixed(2)}%`,
                       width: `${width.toFixed(2)}%`,
-                      background: complete ? "color-mix(in srgb, var(--good) 25%, transparent)" : isProj ? "var(--accent-soft)" : "var(--ui-surface-3)",
+                      background: complete ? "color-mix(in srgb, var(--good) 25%, transparent)" : isTask ? "var(--accent-soft)" : "var(--ui-surface-3)",
                     }}
                   />
                   <div
@@ -162,7 +162,7 @@ export function MobileBoard({
                       height: 9,
                       background: complete
                         ? "var(--good)"
-                        : isProj
+                        : isTask
                           ? "var(--accent)"
                           : "color-mix(in srgb, var(--accent) 80%, transparent)",
                     }}
@@ -188,11 +188,11 @@ export function MobileBoard({
             onClick={() => setModalOpen(true)}
           >
             <PlusIcon />
-            New project
+            New task
           </button>
         </div>
       </div>
-      <NewProjectModal opened={modalOpen} boardId={currentBoardId} owners={owners} onClose={() => setModalOpen(false)} />
+      <NewTaskModal opened={modalOpen} boardId={currentBoardId} owners={owners} onClose={() => setModalOpen(false)} />
       <ImportJiraModal opened={importOpen} boardId={currentBoardId} onClose={() => setImportOpen(false)} />
     </div>
   );

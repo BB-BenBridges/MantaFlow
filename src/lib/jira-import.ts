@@ -1,4 +1,4 @@
-import type { ProjectDTO, TaskStatus } from "./types";
+import type { TaskDTO, SubtaskStatus } from "./types";
 
 /** Parses RFC4180-ish CSV text (quoted fields, embedded commas/newlines, "" escapes). */
 export function parseCsv(input: string): string[][] {
@@ -138,23 +138,23 @@ export function parseJiraIssues(csvText: string): JiraIssue[] {
     .filter((issue) => issue.key);
 }
 
-export interface ImportedTask {
+export interface ImportedSubtask {
   name: string;
   description: string | null;
   person: string | null;
   start: Date;
   end: Date;
-  status: TaskStatus;
+  status: SubtaskStatus;
 }
 
-export interface ImportedProject {
+export interface ImportedTask {
   name: string;
   description: string | null;
   person: string | null;
-  status: ProjectDTO["status"];
+  status: TaskDTO["status"];
   startDate: Date | null;
   endDate: Date | null;
-  tasks: ImportedTask[];
+  subtasks: ImportedSubtask[];
 }
 
 function addDays(d: Date, days: number) {
@@ -171,14 +171,14 @@ function resolveDates(issue: JiraIssue): { start: Date; end: Date } {
   return { start, end };
 }
 
-function taskStatusFor(issue: JiraIssue): TaskStatus {
+function subtaskStatusFor(issue: JiraIssue): SubtaskStatus {
   const cat = issue.statusCategory.toLowerCase();
   if (cat === "done") return "complete";
   if (cat === "indeterminate") return "inProgress";
   return "todo";
 }
 
-function statusFor(issue: JiraIssue): ProjectDTO["status"] {
+function statusFor(issue: JiraIssue): TaskDTO["status"] {
   const cat = issue.statusCategory.toLowerCase();
   if (cat === "done") return "good";
   if (cat === "indeterminate") return "accent";
@@ -186,39 +186,39 @@ function statusFor(issue: JiraIssue): ProjectDTO["status"] {
   return "idle";
 }
 
-interface ProjectAccumulator {
+interface TaskAccumulator {
   name: string;
   description: string | null;
   person: string | null;
   statusIssue: JiraIssue | null;
   ownStart: Date | null;
   ownEnd: Date | null;
-  tasks: ImportedTask[];
+  subtasks: ImportedSubtask[];
 }
 
 /**
- * Groups a flat Jira issue export into a project hierarchy: top-level issues (no
- * parent) become projects, and every other issue becomes a task under its owning
- * project. A top-level issue that has no children becomes a childless project,
- * using its own dates/status directly rather than being duplicated as a task.
+ * Groups a flat Jira issue export into a task hierarchy: top-level issues (no
+ * parent) become tasks, and every other issue becomes a subtask under its owning
+ * task. A top-level issue that has no children becomes a childless task,
+ * using its own dates/status directly rather than being duplicated as a subtask.
  */
-export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] {
+export function buildTasksFromIssues(issues: JiraIssue[]): ImportedTask[] {
   const byKey = new Map(issues.map((i) => [i.key, i]));
-  const projects = new Map<string, ProjectAccumulator>();
+  const tasks = new Map<string, TaskAccumulator>();
 
-  function ensureProject(key: string, fallbackName: string, description: string, assignee: string, statusIssue: JiraIssue | null) {
-    let p = projects.get(key);
-    if (!p) {
-      p = { name: fallbackName || key, description: description || null, person: assignee || null, statusIssue, ownStart: null, ownEnd: null, tasks: [] };
-      projects.set(key, p);
+  function ensureTask(key: string, fallbackName: string, description: string, assignee: string, statusIssue: JiraIssue | null) {
+    let t = tasks.get(key);
+    if (!t) {
+      t = { name: fallbackName || key, description: description || null, person: assignee || null, statusIssue, ownStart: null, ownEnd: null, subtasks: [] };
+      tasks.set(key, t);
     }
-    return p;
+    return t;
   }
 
   for (const issue of issues) {
     const ownerKey = issue.parentKey || issue.key;
     const owner = byKey.get(ownerKey);
-    const project = ensureProject(
+    const task = ensureTask(
       ownerKey,
       owner?.summary || issue.parentSummary || ownerKey,
       owner?.description || "",
@@ -227,36 +227,36 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
     );
 
     if (issue.key === ownerKey) {
-      // This issue defines the project itself, not a child task under it.
+      // This issue defines the task itself, not a child subtask under it.
       const { start, end } = resolveDates(issue);
-      project.ownStart = start;
-      project.ownEnd = end;
+      task.ownStart = start;
+      task.ownEnd = end;
       continue;
     }
 
     const { start, end } = resolveDates(issue);
-    project.tasks.push({
+    task.subtasks.push({
       name: issue.summary || issue.key,
       description: issue.description || null,
       person: issue.assignee || null,
       start,
       end,
-      status: taskStatusFor(issue),
+      status: subtaskStatusFor(issue),
     });
   }
 
-  const result: ImportedProject[] = [];
-  for (const p of projects.values()) {
-    if (p.tasks.length === 0 && !p.ownStart) continue;
-    p.tasks.sort((a, b) => a.start.getTime() - b.start.getTime());
+  const result: ImportedTask[] = [];
+  for (const t of tasks.values()) {
+    if (t.subtasks.length === 0 && !t.ownStart) continue;
+    t.subtasks.sort((a, b) => a.start.getTime() - b.start.getTime());
     result.push({
-      name: p.name,
-      description: p.description,
-      person: p.person,
-      status: p.statusIssue ? statusFor(p.statusIssue) : "idle",
-      startDate: p.tasks.length === 0 ? p.ownStart : null,
-      endDate: p.tasks.length === 0 ? p.ownEnd : null,
-      tasks: p.tasks,
+      name: t.name,
+      description: t.description,
+      person: t.person,
+      status: t.statusIssue ? statusFor(t.statusIssue) : "idle",
+      startDate: t.subtasks.length === 0 ? t.ownStart : null,
+      endDate: t.subtasks.length === 0 ? t.ownEnd : null,
+      subtasks: t.subtasks,
     });
   }
 
@@ -264,10 +264,10 @@ export function buildProjectsFromIssues(issues: JiraIssue[]): ImportedProject[] 
   return result;
 }
 
-function sortKey(p: ImportedProject): Date {
-  return p.tasks[0]?.start ?? p.startDate ?? new Date(0);
+function sortKey(t: ImportedTask): Date {
+  return t.subtasks[0]?.start ?? t.startDate ?? new Date(0);
 }
 
-export function parseJiraCsvToProjects(csvText: string): ImportedProject[] {
-  return buildProjectsFromIssues(parseJiraIssues(csvText));
+export function parseJiraCsvToTasks(csvText: string): ImportedTask[] {
+  return buildTasksFromIssues(parseJiraIssues(csvText));
 }

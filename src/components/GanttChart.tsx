@@ -4,16 +4,16 @@ import { useEffect, useRef } from "react";
 import "@/app/frappe-gantt.css";
 import type Gantt from "frappe-gantt";
 import type { GanttTask, GanttViewMode } from "frappe-gantt";
-import { fmtRange, TASK_STATUS_LABELS } from "@/lib/gantt-logic";
-import { ZOOM_LEVELS, type TaskStatus, type ViewMode } from "@/lib/types";
-import { updateTaskDates, updateProjectDates } from "@/server/actions";
+import { fmtRange, SUBTASK_STATUS_LABELS } from "@/lib/gantt-logic";
+import { ZOOM_LEVELS, type SubtaskStatus, type ViewMode } from "@/lib/types";
+import { updateSubtaskDates, updateTaskDates } from "@/server/actions";
 
 export interface GanttChartTask extends GanttTask {
   assignee?: string;
   description?: string;
-  kind?: "project" | "task";
-  hasTasks?: boolean;
-  taskStatus?: TaskStatus;
+  kind?: "task" | "subtask";
+  hasSubtasks?: boolean;
+  subtaskStatus?: SubtaskStatus;
 }
 
 interface GanttChartProps {
@@ -93,11 +93,40 @@ function toDateStr(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
-// A project with child tasks shows a span/progress rolled up from those
-// tasks, so dragging it wouldn't map to a single editable field. A project
-// with no tasks has its own start/end and is editable directly.
-function isNonEditableProjectBar(task: GanttChartTask) {
-  return task.kind === "project" && !!task.hasTasks;
+// A task with child subtasks shows a span/progress rolled up from those
+// subtasks, so dragging it wouldn't map to a single editable field. A task
+// with no subtasks has its own start/end and is editable directly.
+function isNonEditableTaskBar(task: GanttChartTask) {
+  return task.kind === "task" && !!task.hasSubtasks;
+}
+
+// A brand-new board has no tasks to derive a date range or row count from,
+// which otherwise leaves frappe-gantt with a tiny, sparse-looking grid. Feed
+// it one invisible, non-interactive task spanning enough columns to fill a
+// typical viewport at the current zoom level, purely so the empty grid reads
+// as a normal (if empty) timeline rather than a broken one.
+const EMPTY_BOARD_TASK_ID = "__empty_board_placeholder__";
+const EMPTY_STATE_TARGET_WIDTH_PX = 1600;
+const UNIT_STEP_DAYS: Record<string, number> = { Day: 1, Week: 7, Month: 30, Year: 365 };
+
+function emptyBoardFillerTask(viewMode: ViewMode): GanttChartTask {
+  const zoom = ZOOM_LEVELS.find((z) => z.name === viewMode) ?? ZOOM_LEVELS[Math.floor(ZOOM_LEVELS.length / 2)];
+  const steps = Math.max(6, Math.ceil(EMPTY_STATE_TARGET_WIDTH_PX / zoom.columnWidth));
+  const halfDays = Math.ceil((steps / 2) * (UNIT_STEP_DAYS[zoom.unit] ?? 1));
+
+  const start = new Date();
+  start.setDate(start.getDate() - halfDays);
+  const end = new Date();
+  end.setDate(end.getDate() + halfDays);
+
+  return {
+    id: EMPTY_BOARD_TASK_ID,
+    name: "",
+    start: toDateStr(start),
+    end: toDateStr(end),
+    progress: 0,
+    custom_class: "g-empty-filler",
+  };
 }
 
 export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
@@ -113,21 +142,21 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
     onBarClickRef.current = onBarClick;
   }, [onBarClick]);
 
-  // Project bars are a computed rollup of their child tasks, so they can't be
-  // dragged/resized like a task bar. Block the drag before it starts (capture
+  // Task bars are a computed rollup of their child subtasks, so they can't be
+  // dragged/resized like a subtask bar. Block the drag before it starts (capture
   // phase runs before frappe-gantt's own bubble-phase mousedown handler on
   // the SVG) instead of letting it start and silently snapping back.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const blockProjectBarDrag = (e: MouseEvent) => {
+    const blockTaskBarDrag = (e: MouseEvent) => {
       const wrapper = (e.target as HTMLElement).closest(".bar-wrapper");
       if (wrapper?.classList.contains("g-parent") || wrapper?.classList.contains("g-parent-complete")) {
         e.stopPropagation();
       }
     };
-    container.addEventListener("mousedown", blockProjectBarDrag, true);
-    return () => container.removeEventListener("mousedown", blockProjectBarDrag, true);
+    container.addEventListener("mousedown", blockTaskBarDrag, true);
+    return () => container.removeEventListener("mousedown", blockTaskBarDrag, true);
   }, []);
 
   useEffect(() => {
@@ -135,31 +164,30 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
 
     async function apply() {
       tasksRef.current = tasks;
+      const displayTasks = tasks.length === 0 ? [emptyBoardFillerTask(viewMode)] : tasks;
+      // A truly empty board has no rows to size the grid against, so pin a
+      // height to whatever space is actually available instead of the tiny
+      // sliver frappe-gantt would otherwise compute from zero rows.
+      const wrapEl = containerRef.current?.parentElement ?? null;
+      const fillHeight = Math.max(wrapEl?.clientHeight ?? 0, 300);
+
       // Already have a live instance - just swap its task list in place
       // instead of tearing down and rebuilding the whole chart, which is
       // what made expand/collapse feel sluggish.
       if (ganttRef.current) {
-        if (tasks.length === 0) {
-          scrollCleanupRef.current?.();
-          scrollCleanupRef.current = null;
-          containerRef.current!.innerHTML = "";
-          ganttRef.current = null;
-        } else {
-          // `refresh` re-renders via `change_view_mode()` with no
-          // maintain_pos, which resets scroll_to "start" - save/restore the
-          // scroll position ourselves so a background data refresh (e.g.
-          // after persisting a drag) doesn't jump the view back to the
-          // beginning of the timeline.
-          const scrollEl = containerRef.current?.querySelector(".gantt-container") as HTMLElement | null;
-          const scrollLeft = scrollEl?.scrollLeft;
-          ganttRef.current.refresh(tasks);
-          if (scrollEl && scrollLeft !== undefined) scrollEl.scrollLeft = scrollLeft;
-          if (scrollEl) scheduleCenterBarLabels(scrollEl);
-        }
+        // `refresh` re-renders via `change_view_mode()` with no
+        // maintain_pos, which resets scroll_to "start" - save/restore the
+        // scroll position ourselves so a background data refresh (e.g.
+        // after persisting a drag) doesn't jump the view back to the
+        // beginning of the timeline.
+        const scrollEl = containerRef.current?.querySelector(".gantt-container") as HTMLElement | null;
+        const scrollLeft = scrollEl?.scrollLeft;
+        ganttRef.current.options.container_height = tasks.length === 0 ? fillHeight : "auto";
+        ganttRef.current.refresh(displayTasks);
+        if (scrollEl && scrollLeft !== undefined) scrollEl.scrollLeft = scrollLeft;
+        if (scrollEl) scheduleCenterBarLabels(scrollEl);
         return;
       }
-
-      if (tasks.length === 0) return;
 
       const { default: GanttCtor } = await import("frappe-gantt");
       if (cancelled || !containerRef.current) return;
@@ -188,7 +216,7 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
         Year: GanttCtor.VIEW_MODE.YEAR,
       };
 
-      ganttRef.current = new GanttCtor(containerRef.current, tasks, {
+      ganttRef.current = new GanttCtor(containerRef.current, displayTasks, {
         view_mode: viewMode,
         view_modes: ZOOM_LEVELS.map((zoom) => ({
           ...baseModeByUnit[zoom.unit],
@@ -200,25 +228,28 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
         upper_header_height: 45,
         lower_header_height: 30,
         bar_corner_radius: 4,
-        container_height: "auto",
+        container_height: tasks.length === 0 ? fillHeight : "auto",
         infinite_padding: false,
         readonly: false,
         readonly_progress: true,
         move_dependencies: false,
         on_date_change: (task, start, end) => {
           const t = task as GanttChartTask;
-          if (isNonEditableProjectBar(t)) {
+          if (t.id === EMPTY_BOARD_TASK_ID) return;
+          if (isNonEditableTaskBar(t)) {
             ganttRef.current?.refresh(tasksRef.current);
             return;
           }
-          if (t.kind === "project") {
-            updateProjectDates(t.id, toDateStr(start), toDateStr(end));
+          if (t.kind === "task") {
+            updateTaskDates(t.id, toDateStr(start), toDateStr(end));
             return;
           }
-          updateTaskDates(t.id, toDateStr(start), toDateStr(end));
+          updateSubtaskDates(t.id, toDateStr(start), toDateStr(end));
         },
         on_click: (task) => {
-          onBarClickRef.current?.(task as GanttChartTask);
+          const t = task as GanttChartTask;
+          if (t.id === EMPTY_BOARD_TASK_ID) return;
+          onBarClickRef.current?.(t);
         },
         today_button: false,
         view_mode_select: false,
@@ -230,9 +261,9 @@ export function GanttChart({ tasks, viewMode, onBarClick }: GanttChartProps) {
           const toIso = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v));
           ctx.set_title(t.name);
           ctx.set_subtitle((t.assignee ? `${t.assignee}  ·  ` : "") + fmtRange(toIso(ctx.task.start), toIso(ctx.task.end)));
-          if (t.kind === "task" && t.taskStatus) {
-            ctx.set_details(TASK_STATUS_LABELS[t.taskStatus]);
-          } else if (t.kind === "project" && t.hasTasks) {
+          if (t.kind === "subtask" && t.subtaskStatus) {
+            ctx.set_details(SUBTASK_STATUS_LABELS[t.subtaskStatus]);
+          } else if (t.kind === "task" && t.hasSubtasks) {
             ctx.set_details(`${t.progress}% complete`);
           }
         },
