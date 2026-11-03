@@ -23,7 +23,7 @@ A Linear-style Gantt planning app for tracking IT delivery projects, built from 
    cp .env.example .env
    ```
 
-   - `DATABASE_URL` — a PostgreSQL connection string.
+   - `POSTGRES_PRISMA_URL` — pooled PostgreSQL connection string (runtime); `POSTGRES_URL_NON_POOLING` — direct connection (migrations).
    - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — from the [Clerk dashboard](https://dashboard.clerk.com) (API Keys).
 
 3. Apply the Prisma schema and seed sample data:
